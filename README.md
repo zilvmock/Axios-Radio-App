@@ -19,7 +19,7 @@ Download and install using the setup wizard provided in the latest release.
 
 ## Usage
 
-- Search for a radio station by entering the keyword in the search bar and pressing the 'Search' button.
+- Search for a radio station by entering the keyword in the search bar and pressing the **Search** button.
 - Get the top 100 radio stations by clicking the **Top 100** button.
 - Access your favorite stations by clicking on the **Favorite** button.
 - Double click radio station to start playing it.
