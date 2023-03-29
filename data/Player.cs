@@ -4,9 +4,10 @@ using System.Threading.Tasks;
 
 namespace Axios.data
 {
-    internal class Player
+    public class Player
     {
-        public static float defaultVolume = 0.05f;
+        public static float DefaultVolume = 0.05f;
+        public float LastVolume { get; set; }
 
         private static WaveOutEvent waveOut;
         private static MediaFoundationReader audioReader;
@@ -29,7 +30,7 @@ namespace Axios.data
             {
                 throw new TimeoutException();
             }
-            waveOut.Volume = defaultVolume;
+            waveOut.Volume = DefaultVolume;
         }
 
         public void StartPlaying()
