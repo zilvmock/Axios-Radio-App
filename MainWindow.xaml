@@ -3,14 +3,199 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:axios="clr-namespace:Axios"
         mc:Ignorable="d"
     
-        Title="Axios" Height="auto" Width="auto"
-        ResizeMode="CanMinimize"
+        Title="Axios" Height="Auto" Width="Auto"
+        ResizeMode="NoResize"
+        WindowStyle="None"
         WindowStartupLocation="CenterScreen"
-        SizeToContent="WidthAndHeight"
-        Background="#15151C"
-        FontFamily="Assets/Fonts/Roboto-Medium.ttf #Roboto">
+        SizeToContent="WidthAndHeight">
 
+    <Grid Background="#FF2B2B2B">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="50"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="40"/>
+            <ColumnDefinition Width="40"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+
+        <Frame Name="SidePanelFrame"
+               Grid.Row="1"
+               Grid.Column="0"/>
+
+        <Frame Name="ContentFrame"
+               Grid.Row="1"
+               Grid.ColumnSpan="3"
+               Grid.Column="1"
+               Width="Auto"
+               Height="Auto"/>
+
+        <Image Grid.Column="0"
+               Grid.Row="0"
+               Width="20"
+               Height="20"
+               Source="Axios_logo.png"
+               Margin="0,0,15,0"
+               RenderOptions.BitmapScalingMode="Fant">
+        </Image>
+
+        <Label Grid.Column="1"
+               Grid.Row="0"
+               Foreground="LightGray"
+               FontFamily="Assets/Fonts/Roboto-Bold.ttf #Roboto"
+               FontSize="14"
+               VerticalAlignment="Center"
+               Margin="-20,0,0,0"
+               Content="Axios"
+               PreviewMouseLeftButtonDown="UIElement_OnPreviewMouseLeftButtonDown">
+        </Label>
+
+        <!--Minimize Button-->
+        <Grid Name="MinimizeButton"
+              Grid.Column="2"
+              Grid.Row="0"
+              Background="#FF2B2B2B"
+              PreviewMouseLeftButtonDown="MinimizeButton_OnPreviewMouseLeftButtonDown">
+            <Grid.Triggers>
+                <EventTrigger RoutedEvent="MouseEnter">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Grid.Background).(SolidColorBrush.Color)"
+                                            To="#FF404040"
+                                            Duration="0:0:0.2" />
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+
+                <EventTrigger RoutedEvent="MouseLeave">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Grid.Background).(SolidColorBrush.Color)"
+                                            To="#FF2B2B2B"
+                                            Duration="0:0:0.2" />
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+
+                <EventTrigger RoutedEvent="PreviewMouseLeftButtonDown">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Grid.Background).(SolidColorBrush.Color)"
+                                            To="#FF6F6F6F"
+                                            Duration="0:0:0.2" />
+                            <DoubleAnimation Storyboard.TargetName="MinimizeIcon" 
+                                             Storyboard.TargetProperty="(Image.Width)"  
+                                             To="19" Duration="0:0:0.1"/>
+                            <DoubleAnimation Storyboard.TargetName="MinimizeIcon" 
+                                             Storyboard.TargetProperty="(Image.Height)"  
+                                             To="19" Duration ="0:0:0.1"/>
+
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+
+                <EventTrigger RoutedEvent="PreviewMouseLeftButtonUp">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Grid.Background).(SolidColorBrush.Color)"
+                                            To="#FF2B2B2B"
+                                            Duration="0:0:0.2" />
+                            <DoubleAnimation Storyboard.TargetName="MinimizeIcon" 
+                                             Storyboard.TargetProperty="(Image.Width)"  
+                                             To="21" Duration="0:0:0.1"/>
+                            <DoubleAnimation Storyboard.TargetName="MinimizeIcon" 
+                                             Storyboard.TargetProperty="(Image.Height)"  
+                                             To="21" Duration ="0:0:0.1"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Grid.Triggers>
+
+            <Image Name="MinimizeIcon"
+                   Grid.Row="0"
+                   Grid.Column="0"
+                   Source="Assets/minimize.png"
+                   Width="21"
+                   Height="21"
+                   RenderOptions.BitmapScalingMode="Fant">
+            </Image>
+        </Grid>
+
+        <!--Close Button-->
+        <Grid Name="CloseButton"
+              Grid.Row="0"
+              Grid.Column="3"
+              Background="#FF2B2B2B"
+              PreviewMouseLeftButtonDown="CloseButton_OnPreviewMouseLeftButtonDown">
+            <Grid.Triggers>
+                <EventTrigger RoutedEvent="MouseEnter">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Grid.Background).(SolidColorBrush.Color)"
+                                            To="#FF404040"
+                                            Duration="0:0:0.2" />
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+
+                <EventTrigger RoutedEvent="MouseLeave">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Grid.Background).(SolidColorBrush.Color)"
+                                            To="#FF2B2B2B"
+                                            Duration="0:0:0.2" />
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+
+                <EventTrigger RoutedEvent="PreviewMouseLeftButtonDown">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Grid.Background).(SolidColorBrush.Color)"
+                                            To="#FF6F6F6F"
+                                            Duration="0:0:0.2" />
+                            <DoubleAnimation Storyboard.TargetName="CloseIcon" 
+                                             Storyboard.TargetProperty="(Image.Width)"  
+                                             To="19" Duration="0:0:0.1"/>
+                            <DoubleAnimation Storyboard.TargetName="CloseIcon" 
+                                             Storyboard.TargetProperty="(Image.Height)"  
+                                             To="19" Duration ="0:0:0.1"/>
+
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+
+                <EventTrigger RoutedEvent="PreviewMouseLeftButtonUp">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <ColorAnimation Storyboard.TargetProperty="(Grid.Background).(SolidColorBrush.Color)"
+                                            To="#FF2B2B2B"
+                                            Duration="0:0:0.2" />
+                            <DoubleAnimation Storyboard.TargetName="CloseIcon" 
+                                             Storyboard.TargetProperty="(Image.Width)"  
+                                             To="21" Duration="0:0:0.1"/>
+                            <DoubleAnimation Storyboard.TargetName="CloseIcon" 
+                                             Storyboard.TargetProperty="(Image.Height)"  
+                                             To="21" Duration ="0:0:0.1"/>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Grid.Triggers>
+
+            <Image Name="CloseIcon"
+                   Grid.Row="0"
+                   Grid.Column="0"
+                   Source="Assets/close.png"
+                   Width="21"
+                   Height="21"
+                   RenderOptions.BitmapScalingMode="Fant">
+            </Image>
+        </Grid>
+
+    </Grid>
 </Window>

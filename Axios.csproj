@@ -21,6 +21,7 @@
   <ItemGroup>
     <None Remove="Assets\arrowBack.png" />
     <None Remove="Assets\arrowForward.png" />
+    <None Remove="Assets\close.png" />
     <None Remove="Assets\Exit.png" />
     <None Remove="Assets\Favorite.png" />
     <None Remove="Assets\Fonts\Roboto-Black.ttf" />
@@ -35,6 +36,7 @@
     <None Remove="Assets\Fonts\Roboto-Regular.ttf" />
     <None Remove="Assets\Fonts\Roboto-Thin.ttf" />
     <None Remove="Assets\Fonts\Roboto-ThinItalic.ttf" />
+    <None Remove="Assets\minimize.png" />
     <None Remove="Assets\pause.png" />
     <None Remove="Assets\play.png" />
     <None Remove="Assets\radio.png" />
@@ -60,6 +62,7 @@
     <Resource Include="Assets\arrowForward.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
+    <Resource Include="Assets\close.png" />
     <Resource Include="Assets\exit.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
@@ -78,6 +81,7 @@
     <Resource Include="Assets\Fonts\Roboto-Regular.ttf" />
     <Resource Include="Assets\Fonts\Roboto-Thin.ttf" />
     <Resource Include="Assets\Fonts\Roboto-ThinItalic.ttf" />
+    <Resource Include="Assets\minimize.png" />
     <Resource Include="Assets\pause.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>

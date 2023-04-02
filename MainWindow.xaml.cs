@@ -1,33 +1,51 @@
-﻿using System.Collections.Generic;
-using System;
+﻿using System;
 using System.Windows;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Drawing;
-using System.Collections.Specialized;
+using System.ComponentModel;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Navigation;
+using Application = System.Windows.Application;
 using Size = System.Drawing.Size;
 using MouseEventArgs = System.Windows.Forms.MouseEventArgs;
+using Axios.Properties;
 
 namespace Axios
 {
     public partial class MainWindow : Window
     {
+        private Window mainWindow;
         public static NotifyIcon NotifyIcon { get; set; }
         private bool _runInBackgroundShowed;
         private bool _isExiting;
-        private RadioPage RP;
-        public List<Tuple<string, string, string, string, int>> FavoriteStations { get; set; }
+        public static RadioPage RadioPage { get; set; }
+        public static SettingsPage SettingsPage {get; set; }
+        public static SidePanel SidePanel {get; set; }
+        public static Settings AppSettings { get; set; }
 
+        public Frame MWContentFrame
+        {
+            get { return ContentFrame; }
+            set { ContentFrame = value; }
+        }
 
         public MainWindow()
         {
             InitializeComponent();
-            System.Windows.Application.Current.Exit += OnApplicationExit;
+            AppSettings = new Settings();
+            mainWindow = this;
+            MWContentFrame.NavigationUIVisibility = NavigationUIVisibility.Hidden;
+            Application.Current.Exit += OnApplicationExit;
             Closing += Window_Closing;
-            RP = new RadioPage();
+            RadioPage = new RadioPage();
+            SettingsPage = new SettingsPage();
+            SidePanel = new SidePanel(this);
             try
             {
-                System.Windows.Application.Current.MainWindow.Content = RP;
+                ContentFrame.Content = RadioPage;
+                SidePanelFrame.Content = SidePanel;
             }
             catch (Exception)
             {
@@ -42,31 +60,21 @@ namespace Axios
             _isExiting = true;
 
             // Save favorite stations
-            if (FavoriteStations.Count < 1)
-            {
-                Properties.Settings settings = new Properties.Settings();
-                StringCollection favoriteStationsCollection = new StringCollection();
-                foreach (var station in FavoriteStations)
-                {
-                    favoriteStationsCollection.Add(
-                        $"{station.Item1},{station.Item2},{station.Item3},{station.Item4},{station.Item5}"
-                    );
-                }
-
-                Properties.Settings.Default.FavoriteStations = favoriteStationsCollection;
-                Properties.Settings.Default.Save();
-            }
+            AppSettings.FavoriteStations = RadioPage.GetFavoriteStationsAsCollection();
+            Settings.Default.Save();
 
             // Save last station
-            Properties.Settings.Default.LastStation = RadioPage.GetCurrentStationAsCollection();
-            Properties.Settings.Default.Save();
+            AppSettings.LastStation = RadioPage.GetCurrentStationAsCollection();
+            AppSettings.Save();
+
+            RadioPage.StopRadio();
 
             NotifyIcon.Dispose();
         }
 
-        private async void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+        private async void Window_Closing(object? sender, CancelEventArgs e)
         {
-            if (Properties.Settings.Default.MinimizeOnExit)
+            if (Settings.Default.MinimizeOnExit)
             {
                 e.Cancel = true;
                 Hide();
@@ -82,6 +90,10 @@ namespace Axios
                         }
                     });
                 }
+            }
+            else
+            {
+                Application.Current.Shutdown();
             }
         }
 
@@ -129,22 +141,41 @@ namespace Axios
 
         private void OnPlayPauseClick(object? sender, EventArgs e)
         {
-            RP.StopRadio();
+            RadioPage.StopRadio();
         }
 
         private void OnVolumeUpClick(object? sender, EventArgs e)
         {
-            if (RP.AudioPlayer != null) { RP.AudioSlider.Value += 2; }
+            if (RadioPage.AudioPlayer != null) { RadioPage.AudioSlider.Value += 2; }
         }
 
         private void OnVolumeDownClick(object? sender, EventArgs e)
         {
-            if (RP.AudioPlayer != null) { RP.AudioSlider.Value -= 2; }
+            if (RadioPage.AudioPlayer != null) { RadioPage.AudioSlider.Value -= 2; }
         }
 
         private void OnExitClick(object? sender, EventArgs e)
         {
-            System.Windows.Application.Current.Shutdown();
+            Application.Current.Shutdown();
+        }
+
+        // -- Custom Title Bar
+        private void UIElement_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        { 
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                if (Application.Current.MainWindow != null) Application.Current.MainWindow.DragMove();
+            }
+        }
+
+        private void MinimizeButton_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            mainWindow.WindowState = WindowState.Minimized;
+        }
+
+        private void CloseButton_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            Window_Closing(sender, new CancelEventArgs());
         }
     }
 }

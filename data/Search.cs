@@ -13,7 +13,7 @@ namespace Axios.data
 
         public Search() { if (API_URL == string.Empty) API_URL = API.GetRadioBrowserApiUrl(); }
 
-        public async Task<List<Tuple<string, string, string, string, int>>> GetByName(string name)
+        public async Task<List<Tuple<string, string, string, string, int, string>>> GetByName(string name)
         {
             using HttpClient httpClient = new HttpClient();
             HttpResponseMessage response = await httpClient.GetAsync($"http://{API_URL}/json/stations/byname/{name}");
@@ -24,7 +24,7 @@ namespace Axios.data
             return GetStationsList(jsonArray);
         }
 
-        public async Task<List<Tuple<string, string, string, string, int>>> GetByVotes()
+        public async Task<List<Tuple<string, string, string, string, int, string>>> GetByVotes()
         {
             using HttpClient httpClient = new HttpClient();
             HttpResponseMessage response = await httpClient.GetAsync($"http://{API_URL}/json/stations/topvote?limit=100");
@@ -35,9 +35,9 @@ namespace Axios.data
             return GetStationsList(jsonArray);
         }
 
-        private List<Tuple<string, string, string, string, int>> GetStationsList(JArray jsonArray)
+        private List<Tuple<string, string, string, string, int, string>> GetStationsList(JArray jsonArray)
         {
-            List<Tuple<string, string, string, string, int>> namesList = new List<Tuple<string, string, string, string, int>>();
+            List<Tuple<string, string, string, string, int, string>> namesList = new List<Tuple<string, string, string, string, int, string>>();
             foreach (var jsonObject in jsonArray)
             {
                 if (namesList.Count > 499) { break; }
@@ -47,10 +47,11 @@ namespace Axios.data
                 string icon = jsonObject["favicon"]?.ToString() ?? "";
                 string country = jsonObject["countrycode"]?.ToString() ?? "";
                 int votes = int.Parse(jsonObject["votes"]?.ToString() ?? "");
+                string uuid = jsonObject["stationuuid"]!.ToString();
 
                 if (!string.IsNullOrEmpty(stationName))
                 {
-                    namesList.Add(new Tuple<string, string, string, string, int>(url, stationName, icon, country, votes));
+                    namesList.Add(new Tuple<string, string, string, string, int, string>(url, stationName, icon, country, votes, uuid));
                 }
             }
 

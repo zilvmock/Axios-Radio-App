@@ -12,11 +12,13 @@ namespace Axios.data
         private static WaveOutEvent waveOut;
         private static MediaFoundationReader audioReader;
 
-        private bool isInitializing = false;
-        private object initLock = new object();
+        private bool isInitializing;
+        private object initLock;
 
         public Player(string url)
         {
+            isInitializing = false;
+            initLock = new object();
             waveOut = new WaveOutEvent();
             Task initTask = Task.Run(() =>
             {
@@ -63,26 +65,28 @@ namespace Axios.data
         public void ResumePlaying()
         {
             if (waveOut == null || audioReader == null || IsPlaying()) { return; }
-            if (!isInitializing)
+
+            lock (initLock)
             {
+                if (isInitializing)
+                {
+                    return;
+                }
+
+                isInitializing = true;
+            }
+
+            Task.Run(() =>
+            {
+                waveOut.Stop();
+                waveOut.Init(audioReader);
+                waveOut.Play();
+
                 lock (initLock)
                 {
-                    if (!isInitializing)
-                    {
-                        isInitializing = true;
-                        Task.Run(() =>
-                        {
-                            lock (initLock)
-                            {
-                                waveOut.Stop();
-                                waveOut.Init(audioReader);
-                                waveOut.Play();
-                                isInitializing = false;
-                            }
-                        });
-                    }
+                    isInitializing = false;
                 }
-            }
+            });
         }
 
 

@@ -1,5 +1,4 @@
-﻿using System.Windows;
-using System.Windows.Controls;
+﻿using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace Axios
@@ -9,12 +8,12 @@ namespace Axios
         private static bool IsSettingsShowing { get; set; } = false;
         private static bool IsRadioShowing { get; set; } = true;
 
-        public static RadioPage RP { get; set; } = new();
-        public static SettingsPage SP { get; set; } = new();
+        private readonly MainWindow _mainWindow;
 
-        public SidePanel()
+        public SidePanel(MainWindow mainWindow)
         {
             InitializeComponent();
+            this._mainWindow = mainWindow;
         }
 
         private void RadioStationsBtn_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -23,10 +22,7 @@ namespace Axios
             {
                 IsSettingsShowing = !IsSettingsShowing;
                 IsRadioShowing = !IsRadioShowing;
-                // TODO: doesn't apply coloring
-                Window mw = Application.Current.MainWindow;
-                mw.Content = RP;
-                _ = RP.UpdateStationBackgroundToCorrect(RadioPage.CurrentStationRow);
+                _mainWindow.MWContentFrame.Content = MainWindow.RadioPage;
             }
         }
 
@@ -36,8 +32,7 @@ namespace Axios
             {
                 IsSettingsShowing = !IsSettingsShowing;
                 IsRadioShowing = !IsRadioShowing;
-                Window mw = Application.Current.MainWindow;
-                mw.Content = SP;
+                _mainWindow.MWContentFrame.Content = MainWindow.SettingsPage;
             }
         }
     }
