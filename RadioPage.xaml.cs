@@ -549,11 +549,15 @@ namespace Axios
             await UpdateStationBackgroundToCorrect(CurrentStationRowUUID);
         }
 
-        private void Top100Btn_OnClick(object sender, RoutedEventArgs e)
+        private async void Top100Btn_OnClick(object sender, RoutedEventArgs e)
         {
             FavoriteRemoveBtn.Visibility = Visibility.Collapsed;
             FavoriteAddBtn.Visibility = Visibility.Visible;
-            _ = GatherStationsByVotesAsync();
+            _currentPage = 1;
+            Dispatcher.Invoke(() => { CurrentDataGridPageLabel.Content = _currentPage; });
+            await GatherStationsByVotesAsync();
+            await UpdateStationBackgroundToCorrect(CurrentStationRowUUID);
+
         }
 
         private async void FavoriteBtn_OnClick(object sender, RoutedEventArgs e)
@@ -638,7 +642,8 @@ namespace Axios
             
             if (_currentPage < 1)
             {
-                _currentPage = 1; 
+                _currentPage = 1;
+                _isLastPage = false;
                 return;
             }
 
@@ -653,20 +658,23 @@ namespace Axios
             _currentPage += 1;
             int startIndex = (_stationsPerPage * _currentPage) - _stationsPerPage;
             
-            if (_isLastPage)
-            {
-                _currentPage -= 1;
-                return;
-            }
-
             if (startIndex + _stationsPerPage >= _radioStations.Count)
             {
                 _isLastPage = true;
+            }
+            else
+            {
+                _isLastPage = false;
             }
 
             CurrentDataGridPageLabel.Dispatcher.Invoke(() => { CurrentDataGridPageLabel.Content = _currentPage.ToString(); });
             await FormatResultsAsync(GetCurrentDataGridAsTuple(), _currentPage);
             await UpdateStationBackgroundToCorrect(CurrentStationRowUUID);
+
+            if (_isLastPage)
+            {
+                _currentPage -= 1;
+            }
         }
 
         private void AudioImg_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
