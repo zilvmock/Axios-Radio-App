@@ -36,6 +36,7 @@
     <None Remove="Assets\Fonts\Roboto-Regular.ttf" />
     <None Remove="Assets\Fonts\Roboto-Thin.ttf" />
     <None Remove="Assets\Fonts\Roboto-ThinItalic.ttf" />
+    <None Remove="Assets\loading.gif" />
     <None Remove="Assets\minimize.png" />
     <None Remove="Assets\pause.png" />
     <None Remove="Assets\play.png" />
@@ -53,6 +54,7 @@
   <ItemGroup>
     <PackageReference Include="NAudio" Version="2.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+    <PackageReference Include="WpfAnimatedGif" Version="2.0.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -81,6 +83,9 @@
     <Resource Include="Assets\Fonts\Roboto-Regular.ttf" />
     <Resource Include="Assets\Fonts\Roboto-Thin.ttf" />
     <Resource Include="Assets\Fonts\Roboto-ThinItalic.ttf" />
+    <Resource Include="Assets\loading.gif">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Assets\minimize.png" />
     <Resource Include="Assets\pause.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>

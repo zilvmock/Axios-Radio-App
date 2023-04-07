@@ -1,0 +1,64 @@
+﻿<Window x:Class="Axios.StationsCacheWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:gif="http://wpfanimatedgif.codeplex.com"
+        mc:Ignorable="d"
+        Title="Cache Stations" Height="200" Width="400"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        WindowStartupLocation="CenterScreen"
+        SizeToContent="WidthAndHeight"
+        Topmost="True">
+
+    <Grid Background="#FF2B2B2B">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="50"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="50"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="50"/>
+        </Grid.RowDefinitions>
+
+        <Image Grid.Column="1"
+               Grid.Row="0"
+               Source="Axios_logo.png"
+               RenderOptions.BitmapScalingMode="Fant"
+               Height="32">
+        </Image>
+        <TextBlock Grid.Column="1"
+                   Grid.Row="1"
+                   FontFamily="Assets/Fonts/Roboto-Medium.ttf #Roboto"
+                   HorizontalAlignment="Center"
+                   FontSize="16"
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"
+                   Foreground="LightGray"
+                   Text="Caching radio stations... this might take some time.">
+        </TextBlock>
+        <Image Grid.Column="1"
+               Grid.Row="2"
+               Height="Auto"
+               gif:ImageBehavior.AnimatedSource="Assets/loading.gif"
+               gif:ImageBehavior.RepeatBehavior="Forever"
+               RenderOptions.BitmapScalingMode="Fant">
+
+        </Image>
+        <TextBlock Grid.Column="1"
+                   Grid.Row="3"
+                   FontFamily="Assets/Fonts/Roboto-Light.ttf #Roboto"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   FontSize="12"
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"
+                   Foreground="LightGray"
+                   Text="This window will close when it's done">
+        </TextBlock>
+    </Grid>
+</Window>

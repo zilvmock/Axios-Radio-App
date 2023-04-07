@@ -4,9 +4,11 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Drawing;
 using System.ComponentModel;
+using System.IO;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Navigation;
+using Axios.data;
 using Application = System.Windows.Application;
 using Size = System.Drawing.Size;
 using MouseEventArgs = System.Windows.Forms.MouseEventArgs;
@@ -16,7 +18,7 @@ namespace Axios
 {
     public partial class MainWindow : Window
     {
-        private Window mainWindow;
+        public Window mainWindow => this;
         public static NotifyIcon NotifyIcon { get; set; }
         private bool _runInBackgroundShowed;
         private bool _isExiting;
@@ -33,9 +35,9 @@ namespace Axios
 
         public MainWindow()
         {
+            Data.Resources.InitializeTempDir();
             InitializeComponent();
             AppSettings = new Settings();
-            mainWindow = this;
             MWContentFrame.NavigationUIVisibility = NavigationUIVisibility.Hidden;
             Application.Current.Exit += OnApplicationExit;
             Closing += Window_Closing;
