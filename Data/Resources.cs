@@ -35,7 +35,10 @@ namespace Axios.Data
                 {
                     foreach (string file in Directory.GetFiles(TEMP_FOLDER_PATH))
                     {
-                        File.Delete(file);
+                        if (Path.GetExtension(file) != ".json")
+                        {
+                            File.Delete(file);
+                        }
                     }
                 }
             }

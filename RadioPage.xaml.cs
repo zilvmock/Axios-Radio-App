@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -43,19 +44,22 @@ namespace Axios
         {
             InitializeComponent();
             Data.Resources.ClearTempDir();
-            Application.Current.MainWindow.IsEnabled = false;
-            Application.Current.MainWindow.Opacity = 0.5;
             InitializeCache();
         }
 
         private async void InitializeCache()
         {
-            var stw = new StationsCacheWindow();
-            stw.Show();
-            await stw.GrabStations();
-            stw.Close();
-            Application.Current.MainWindow.IsEnabled = true;
-            Application.Current.MainWindow.Opacity = 1;
+            if (!File.Exists(Data.Resources.CACHE_FILE_PATH))
+            {
+                Application.Current.MainWindow.IsEnabled = false;
+                Application.Current.MainWindow.Opacity = 0.5;
+                var stw = new StationsCacheWindow();
+                stw.Show();
+                await stw.GrabStations();
+                stw.Close();
+                Application.Current.MainWindow.IsEnabled = true;
+                Application.Current.MainWindow.Opacity = 1;
+            }
             InitializeUI();
         }
 
