@@ -25,14 +25,13 @@ namespace Axios
     {
         public Player? AudioPlayer;
         private static Thread? _playerThread;
-        private List<Tuple<string, string, string, string, int, string>> _radioStations;
         private Search _search = new();
+        private List<Tuple<string, string, string, string, int, string>> _radioStations;
         private List<Tuple<string, string, string, string, int, string>> _currentStations;
         private string _prevStationUrl = string.Empty;
         
         private string? _prevStationRowUUID;
         public static string CurrentStationRowUUID;
-        //private string _nextStationRowUUID;
 
         private string _prevRowUUID;
         private string _nextRowUUID;
@@ -62,17 +61,7 @@ namespace Axios
 
         private async void InitializeCache()
         {
-            if (!File.Exists(Data.Resources.CACHE_FILE_PATH))
-            {
-                Application.Current.MainWindow.IsEnabled = false;
-                Application.Current.MainWindow.Opacity = 0.5;
-                var stw = new StationsCacheWindow();
-                stw.Show();
-                await stw.GrabStations();
-                stw.Close();
-                Application.Current.MainWindow.IsEnabled = true;
-                Application.Current.MainWindow.Opacity = 1;
-            }
+            await new StationsCacheWindow().InitializeStationsCache();
             InitializeUI();
         }
 

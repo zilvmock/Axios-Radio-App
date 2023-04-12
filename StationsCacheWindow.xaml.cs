@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using Axios.data;
 
@@ -11,9 +12,18 @@ namespace Axios
             InitializeComponent();
         }
 
-        public async Task GrabStations()
+        public async Task InitializeStationsCache()
         {
-            await new Search().GetAllStations();
+            if (!File.Exists(Data.Resources.CACHE_FILE_PATH))
+            {
+                Show();
+                Application.Current.MainWindow.IsEnabled = false;
+                Application.Current.MainWindow.Opacity = 0.5;
+                await new Search().GetAllStations();
+                Application.Current.MainWindow.IsEnabled = true;
+                Application.Current.MainWindow.Opacity = 1;
+                Close();
+            }
         }
     }
 }

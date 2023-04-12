@@ -27,7 +27,7 @@ namespace Axios.Data
             }
         }
 
-        public static void ClearTempDir()
+        public static void ClearTempDir(bool deleteJsonCache = false)
         {
             try
             {
@@ -38,6 +38,10 @@ namespace Axios.Data
                         if (Path.GetExtension(file) != ".json")
                         {
                             File.Delete(file);
+                        }
+                        else
+                        {
+                            if (deleteJsonCache) { File.Delete(file); }
                         }
                     }
                 }

@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using Axios.data;
 
 namespace Axios
 {
@@ -20,6 +21,13 @@ namespace Axios
                 Properties.Settings.Default.MinimizeOnExit = (bool)MinimizeOnCloseCheckBox.IsChecked;
                 Properties.Settings.Default.Save();
             }
+        }
+
+        private async void UpdateStationsCacheBtn_OnClick(object sender, RoutedEventArgs e)
+        {
+            Data.Resources.ClearTempDir(true);
+            await new StationsCacheWindow().InitializeStationsCache();
+            await new Search().GetAllStations();
         }
     }
 }
