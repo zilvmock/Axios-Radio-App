@@ -32,7 +32,7 @@ namespace Axios
         
         private string? _prevStationRowUUID;
         public static string CurrentStationRowUUID;
-        private string _nextStationRowUUID;
+        //private string _nextStationRowUUID;
 
         private string _prevRowUUID;
         private string _nextRowUUID;
@@ -43,8 +43,15 @@ namespace Axios
         private bool _isFirstItemOnPage;
         private string _resultsType;
         private readonly int _stationsPerPage = 18;
+
         private bool _favoriteStationsIsShowing;
+        private bool _top100StationsIsShowing;
+        private bool _dataGridColumnsLoaded;
+
         private static List<Tuple<string, string, string, string, int, string>> _favoriteStations;
+
+        private static readonly SolidColorBrush _defaultBtnColorBrush = new (Color.FromRgb(230, 151, 55));
+        private static readonly SolidColorBrush _pressedBtnColorBrush = new (Color.FromRgb(115, 14, 2));
 
         public RadioPage()
         {
@@ -143,13 +150,14 @@ namespace Axios
             }
         }
 
+        // TODO: rework this, because it's become unnecessary
         private Task FormatResultsAsync(List<Tuple<string, string, string, string, int, string>> radioStations, int page = 1)
         {
             Dispatcher.Invoke(() =>
             {
                 StationsDataGrid.IsEnabled = false;
 
-                if (StationsDataGrid.ItemsSource == null)
+                if (! _dataGridColumnsLoaded)
                 {
                     DataGridTextColumn column1 = new DataGridTextColumn
                     {
@@ -173,46 +181,11 @@ namespace Axios
                     StationsDataGrid.Columns.Add(column1);
                     StationsDataGrid.Columns.Add(column2);
                     StationsDataGrid.Columns.Add(column3);
+                    _dataGridColumnsLoaded = true;
                 }
 
-                int startIndex = (_stationsPerPage * page) - _stationsPerPage;
-
-                if (_favoriteStationsIsShowing && radioStations != null)
-                {
-                    //StationsDataGrid.ItemsSource = radioStations.GetRange(startIndex, radioStations.Count);
-                    StationsDataGrid.ItemsSource = radioStations;
-                    //StationsDataGrid.DataContext = radioStations;
-
-                    FavoriteBtn.Dispatcher.Invoke(() =>
-                    {
-                        PrevDataGridPageBtn.Visibility = Visibility.Collapsed;
-                        NextDataGridPageBtn.Visibility = Visibility.Collapsed;
-                        CurrentDataGridPageLabel.Visibility = Visibility.Collapsed;
-                    });
-                }
-                else
-                {
-                    FavoriteBtn.Dispatcher.Invoke(() =>
-                    {
-                        PrevDataGridPageBtn.Visibility = Visibility.Visible;
-                        NextDataGridPageBtn.Visibility = Visibility.Visible;
-                        CurrentDataGridPageLabel.Visibility = Visibility.Visible;
-                    });
-
-                    if (startIndex + _stationsPerPage >= _radioStations.Count)
-                    {
-                        //StationsDataGrid.ItemsSource = _radioStations.GetRange(startIndex, _radioStations.Count - startIndex);
-                        StationsDataGrid.ItemsSource = radioStations;
-                    }
-                    else
-                    {
-                        //StationsDataGrid.ItemsSource = _radioStations.GetRange(startIndex, _stationsPerPage);
-                        StationsDataGrid.ItemsSource = radioStations;
-                    }
-                }
-
+                StationsDataGrid.ItemsSource = radioStations;
                 StationsDataGrid.IsEnabled = true;
-
             });
 
             return Task.CompletedTask;
@@ -239,6 +212,9 @@ namespace Axios
             _radioStations = _search.GetPageOfStations(startIndex, endIndex, _radioStations);
             _resultsType = "votes";
             await FormatResultsAsync(_radioStations);
+
+            _top100StationsIsShowing = true;
+            Dispatcher.Invoke(() => { Top100Btn.Background = _pressedBtnColorBrush; });
         }
 
         private async Task StartPlayerAsync(DataGridRow stationRow, bool autoPlay = true)
@@ -658,23 +634,33 @@ namespace Axios
         // -- Stations and UI
         private async void SearchButton_OnClick(object sender, RoutedEventArgs e)
         {
-            FavoriteRemoveBtn.Visibility = Visibility.Collapsed;
-            FavoriteAddBtn.Visibility = Visibility.Visible;
             _currentPage = 1;
-            Dispatcher.Invoke(() => { CurrentDataGridPageLabel.Content = _currentPage; });
+            _top100StationsIsShowing = false;
+            Dispatcher.Invoke(() =>
+            {
+                CurrentDataGridPageLabel.Content = _currentPage;
+                FavoriteRemoveBtn.Visibility = Visibility.Collapsed;
+                FavoriteAddBtn.Visibility = Visibility.Visible;
+                Top100Btn.Background = _defaultBtnColorBrush;
+            });
             await GatherStationsByNameAsync();
             await UpdateStationBackgroundToCorrect(CurrentStationRowUUID);
         }
 
         private async void Top100Btn_OnClick(object sender, RoutedEventArgs e)
         {
-            FavoriteRemoveBtn.Visibility = Visibility.Collapsed;
-            FavoriteAddBtn.Visibility = Visibility.Visible;
+            _favoriteStationsIsShowing = false;
             _currentPage = 1;
-            Dispatcher.Invoke(() => { CurrentDataGridPageLabel.Content = _currentPage; });
+            Dispatcher.Invoke(() =>
+            {
+                CurrentDataGridPageLabel.Content = _currentPage;
+                FavoriteRemoveBtn.Visibility = Visibility.Collapsed;
+                FavoriteAddBtn.Visibility = Visibility.Visible;
+                Top100Btn.Background = _top100StationsIsShowing ? _pressedBtnColorBrush : _defaultBtnColorBrush;
+                FavoriteBtn.Background = _defaultBtnColorBrush;
+            });
             await GatherStationsByVotesAsync();
             await UpdateStationBackgroundToCorrect(CurrentStationRowUUID);
-
         }
 
         private async void FavoriteBtn_OnClick(object sender, RoutedEventArgs e)
@@ -682,20 +668,28 @@ namespace Axios
             if (_favoriteStationsIsShowing)
             {
                 _favoriteStationsIsShowing = !_favoriteStationsIsShowing;
-                FavoriteBtn.Background = new SolidColorBrush(Color.FromRgb(230, 151, 55));
-                FavoriteRemoveBtn.Visibility = Visibility.Collapsed;
-                FavoriteAddBtn.Visibility = Visibility.Visible;
+                Dispatcher.Invoke(() =>
+                {
+                    FavoriteBtn.Background = _defaultBtnColorBrush;
+                    Top100Btn.Background = _top100StationsIsShowing ? _pressedBtnColorBrush : _defaultBtnColorBrush;
+                    FavoriteRemoveBtn.Visibility = Visibility.Collapsed;
+                    FavoriteAddBtn.Visibility = Visibility.Visible;
+                });
                 await FormatResultsAsync(_currentStations, _currentPage);
                 await UpdateStationBackgroundToCorrect(CurrentStationRowUUID);
             }
             else
             {
                 _favoriteStationsIsShowing = !_favoriteStationsIsShowing;
-                FavoriteBtn.Background = new SolidColorBrush(Color.FromRgb(115, 14, 2));
+                Dispatcher.Invoke(() =>
+                {
+                    FavoriteBtn.Background = _pressedBtnColorBrush;
+                    Top100Btn.Background = _defaultBtnColorBrush;
+                    FavoriteAddBtn.Visibility = Visibility.Collapsed;
+                    FavoriteRemoveBtn.Visibility = Visibility.Visible;
+                });
                 _currentStations = GetCurrentDataGridAsTuple();
                 await FormatResultsAsync(_favoriteStations);
-                FavoriteRemoveBtn.Visibility = Visibility.Visible;
-                FavoriteAddBtn.Visibility = Visibility.Collapsed;
             }
         }
 
