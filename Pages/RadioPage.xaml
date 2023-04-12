@@ -7,12 +7,12 @@
 
       Title="Radio" Height="Auto" Width="Auto"
       Background="#15151C"
-      FontFamily="Assets/Fonts/Roboto-Medium.ttf #Roboto">
+      FontFamily="../Assets/Fonts/Roboto-Medium.ttf #Roboto">
 
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="CustomStyles.xaml"/>
+                <ResourceDictionary Source="../Styles/CustomStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Page.Resources>
@@ -80,7 +80,7 @@
                 Height="24" Width="40"
                 Margin="0,10,0,0"
                 Click="SearchButton_OnClick">
-            <Image Source="Assets/search.png"
+            <Image Source="../Assets/search.png"
                        Width="16"
                        Height="16"
                        RenderOptions.BitmapScalingMode="Fant"/>
@@ -148,7 +148,7 @@
                                 Header="Add to favorites"
                                 Click="MenuItem_Add_Click">
                             <MenuItem.Icon>
-                                <Image Width="16" Height="16" Source="assets/favorite.png"/>
+                                <Image Width="16" Height="16" Source="../Assets/favorite.png"/>
                             </MenuItem.Icon>
                         </MenuItem>
                         <MenuItem 
@@ -157,7 +157,7 @@
                                 Header="Remove"
                                 Click="MenuItem_Remove_Click">
                             <MenuItem.Icon>
-                                <Image Width="16" Height="16" Source="assets/exit.png"/>
+                                <Image Width="16" Height="16" Source="../Assets/exit.png"/>
                             </MenuItem.Icon>
                         </MenuItem>
                     </ContextMenu>
@@ -175,7 +175,7 @@
                 Height="24" Width="30"
                 ToolTip="Previous page"
                 Click="PrevDataGridPageBtn_OnClick">
-            <Image Source="Assets/arrowBack.png"
+            <Image Source="../Assets/arrowBack.png"
                        Width="16"
                        Height="10"
                        RenderOptions.BitmapScalingMode="Fant"/>
@@ -205,7 +205,7 @@
                 VerticalAlignment="Top"
                 Height="24" Width="30"
                 Click="NextDataGridPageBtn_OnClick">
-            <Image Source="Assets/arrowForward.png"
+            <Image Source="../Assets/arrowForward.png"
                        Width="16"
                        Height="10"
                        RenderOptions.BitmapScalingMode="Fant"/>
@@ -221,7 +221,7 @@
                Width="70"
                Margin="10,10,0,0"
                VerticalAlignment="Top"
-               Source="Axios_logo.png"
+               Source="../Axios_logo.png"
                RenderOptions.BitmapScalingMode="Fant">
         </Image>
 
@@ -249,7 +249,7 @@
                 VerticalAlignment="Top"
                 Click="PrevStationBtn_OnClick"
                 Height="32" Width="30">
-            <Image Source="Assets/skipPrevious.png"
+            <Image Source="../Assets/skipPrevious.png"
                    Width="16"
                    Height="16"
                    RenderOptions.BitmapScalingMode="Fant"/>
@@ -265,7 +265,7 @@
                 Click="StopPlayerBtn_OnClick"
                 Height="32" Width="40">
             <Image Name="StopPlayerImg"
-                   Source="Assets/play.png"
+                   Source="../Assets/play.png"
                    RenderOptions.BitmapScalingMode="Fant"/>
         </Button>
 
@@ -278,7 +278,7 @@
                 VerticalAlignment="Top"
                 Click="NextStationBtn_OnClick"
                 Height="32" Width="30">
-            <Image Source="Assets/skipNext.png"
+            <Image Source="../Assets/skipNext.png"
                    Width="16"
                    Height="16"
                    RenderOptions.BitmapScalingMode="Fant"/>
@@ -293,7 +293,7 @@
                Margin="0,8,80,0"
                Width="21"
                Height="21"
-               Source="Assets/volume.png"
+               Source="../Assets/volume.png"
                RenderOptions.BitmapScalingMode="Fant"
                PreviewMouseLeftButtonDown="AudioImg_OnPreviewMouseLeftButtonDown">
         </Image>

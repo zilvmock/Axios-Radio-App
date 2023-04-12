@@ -27,13 +27,13 @@
 
         <Image Grid.Column="1"
                Grid.Row="0"
-               Source="Axios_logo.png"
+               Source="../Axios_logo.png"
                RenderOptions.BitmapScalingMode="Fant"
                Height="32">
         </Image>
         <TextBlock Grid.Column="1"
                    Grid.Row="1"
-                   FontFamily="Assets/Fonts/Roboto-Medium.ttf #Roboto"
+                   FontFamily="../Assets/Fonts/Roboto-Medium.ttf #Roboto"
                    HorizontalAlignment="Center"
                    FontSize="16"
                    TextWrapping="Wrap"
@@ -44,14 +44,14 @@
         <Image Grid.Column="1"
                Grid.Row="2"
                Height="Auto"
-               gif:ImageBehavior.AnimatedSource="Assets/loading.gif"
+               gif:ImageBehavior.AnimatedSource="../Assets/loading.gif"
                gif:ImageBehavior.RepeatBehavior="Forever"
                RenderOptions.BitmapScalingMode="Fant">
 
         </Image>
         <TextBlock Grid.Column="1"
                    Grid.Row="3"
-                   FontFamily="Assets/Fonts/Roboto-Light.ttf #Roboto"
+                   FontFamily="../Assets/Fonts/Roboto-Light.ttf #Roboto"
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center"
                    FontSize="12"

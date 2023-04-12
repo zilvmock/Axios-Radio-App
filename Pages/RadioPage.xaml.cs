@@ -52,6 +52,12 @@ namespace Axios
         private static readonly SolidColorBrush _defaultBtnColorBrush = new (Color.FromRgb(230, 151, 55));
         private static readonly SolidColorBrush _pressedBtnColorBrush = new (Color.FromRgb(115, 14, 2));
 
+        private static readonly BitmapImage _playImg = new (new Uri("../Assets/play.png", UriKind.Relative));
+        private static readonly BitmapImage _pauseImg = new (new Uri("../Assets/pause.png", UriKind.Relative));
+        private static readonly BitmapImage _logoImg = new (new Uri("./Axios_logo.png", UriKind.Relative));
+        private static readonly BitmapImage _volumeImg = new (new Uri("../Assets/volume.png", UriKind.Relative));
+        private static readonly BitmapImage _volumeMuteImg = new (new Uri("../Assets/volumeMute.png", UriKind.Relative));
+
         public RadioPage()
         {
             InitializeComponent();
@@ -71,7 +77,7 @@ namespace Axios
             {
                 AudioVolumeLabel.Content = Player.DefaultVolume * 100;
                 AudioSlider.Value = Player.DefaultVolume * 100;
-                StopPlayerImg.Source = new BitmapImage(new Uri("Assets/play.png", UriKind.Relative));
+                StopPlayerImg.Source = _playImg;
                 PrevStationBtn.IsEnabled = false;
                 NextStationBtn.IsEnabled = false;
                 FavoriteRemoveBtn.Visibility = Visibility.Collapsed;
@@ -269,7 +275,7 @@ namespace Axios
                 await UpdateStationBackgroundToCorrect(CurrentStationRowUUID);
                 Dispatcher.Invoke(() =>
                 {
-                    StopPlayerImg.Source = new BitmapImage(new Uri("Assets/play.png", UriKind.Relative));
+                    StopPlayerImg.Source = _playImg;
                     StationsDataGrid.IsEnabled = true;
                 });
 
@@ -290,7 +296,7 @@ namespace Axios
                 AudioPlayer.PausePlaying();
                 StopPlayerBtn.Dispatcher.Invoke(() =>
                 {
-                    StopPlayerImg.Source = new BitmapImage(new Uri("Assets/play.png", UriKind.Relative));
+                    StopPlayerImg.Source = _playImg;
                     StopPlayerBtn.ToolTip = "Resume";
                 });
             }
@@ -299,7 +305,7 @@ namespace Axios
                 AudioPlayer.ResumePlaying();
                 StopPlayerBtn.Dispatcher.Invoke(() =>
                 {
-                    StopPlayerImg.Source = new BitmapImage(new Uri("Assets/pause.png", UriKind.Relative));
+                    StopPlayerImg.Source = _pauseImg;
                     StopPlayerBtn.ToolTip = "Pause";
                 });
             }
@@ -321,12 +327,12 @@ namespace Axios
                 StopPlayerBtn.Visibility = Visibility.Visible;
                 if (paused)
                 {
-                    StopPlayerImg.Source = new BitmapImage(new Uri("Assets/pause.png", UriKind.Relative));
+                    StopPlayerImg.Source = _pauseImg;
                     StopPlayerBtn.ToolTip = "Pause";
                 }
                 else
                 {
-                    StopPlayerImg.Source = new BitmapImage(new Uri("Assets/play.png", UriKind.Relative));
+                    StopPlayerImg.Source = _playImg;
                     StopPlayerBtn.ToolTip = "Resume";
                 }
                 StopPlayerBtn.IsEnabled = true;
@@ -338,7 +344,7 @@ namespace Axios
             {
                 Dispatcher.Invoke(() =>
                 {
-                    StationFavIconImg.Source = new BitmapImage(new Uri("Axios_logo.png", UriKind.Relative));
+                    StationFavIconImg.Source = _logoImg;
                 });
 
                 return;
@@ -349,7 +355,7 @@ namespace Axios
             {
                 StationFavIconImg.Dispatcher.Invoke(() =>
                 {
-                    StationFavIconImg.Source = new BitmapImage(new Uri("Axios_logo.png", UriKind.Relative));
+                    StationFavIconImg.Source = _logoImg;
                 });
             }
             else
@@ -809,7 +815,7 @@ namespace Axios
                     AudioSlider.Value = AudioPlayer.LastVolume * 100;
                     Dispatcher.Invoke(() =>
                     {
-                        AudioImg.Source = new BitmapImage(new Uri("Assets/volume.png", UriKind.Relative));
+                        AudioImg.Source = _volumeImg;
                         AudioVolumeLabel.Content = (int)Math.Round(AudioSlider.Value);
                     });
                 }
@@ -820,7 +826,7 @@ namespace Axios
                     AudioPlayer.SetVolume(0);
                     Dispatcher.Invoke(() =>
                     {
-                        AudioImg.Source = new BitmapImage(new Uri("Assets/volumeMute.png", UriKind.Relative));
+                        AudioImg.Source = _volumeMuteImg;
                         AudioVolumeLabel.Content = "0";
                     });
                 }

@@ -7,12 +7,12 @@
       d:DesignHeight="Auto" d:DesignWidth="Auto"
       Title="Settings"
       Background="#15151C"
-      FontFamily="Assets/Fonts/Roboto-Medium.ttf #Roboto">
+      FontFamily="../Assets/Fonts/Roboto-Medium.ttf #Roboto">
 
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="CustomStyles.xaml"/>
+                <ResourceDictionary Source="../Styles/CustomStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Page.Resources>
@@ -109,7 +109,7 @@
                    Grid.Row="4"
                    TextWrapping="Wrap"
                    Grid.ColumnSpan="6"
-                   FontFamily="Assets/Fonts/Roboto-Light.ttf #Roboto"
+                   FontFamily="../Assets/Fonts/Roboto-Light.ttf #Roboto"
                    Margin="60,0,30,5"
                    Text="This is not necessary, but you can do it if you want to ensure that you have the latest list."
                    VerticalAlignment="Bottom"

@@ -94,7 +94,7 @@
             <Image Name="RadioIcon"
                    Grid.Row="0"
                    Grid.Column="0"
-                   Source="Assets/radio.png"
+                   Source="../Assets/radio.png"
                    Width="21"
                    Height="21"
                    RenderOptions.BitmapScalingMode="Fant">
@@ -165,7 +165,7 @@
             <Image Name="SettingsIcon"
                    Grid.Row="0"
                    Grid.Column="0"
-                   Source="Assets/settings.png"
+                   Source="../Assets/settings.png"
                    Width="21"
                    Height="21"
                    RenderOptions.BitmapScalingMode="Fant">
