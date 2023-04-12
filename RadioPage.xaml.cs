@@ -29,12 +29,18 @@ namespace Axios
         private Search _search = new();
         private List<Tuple<string, string, string, string, int, string>> _currentStations;
         private string _prevStationUrl = string.Empty;
+        
         private string? _prevStationRowUUID;
         public static string CurrentStationRowUUID;
-        private string _nextBtnStationRowUUID;
-        private string _prevBtnStationRowUUID;
+        private string _nextStationRowUUID;
+
+        private string _prevRowUUID;
+        private string _nextRowUUID;
+
         private int _currentPage = 1;
         private bool _isLastPage;
+        private bool _isLastItemOnPage;
+        private bool _isFirstItemOnPage;
         private string _resultsType;
         private readonly int _stationsPerPage = 18;
         private bool _favoriteStationsIsShowing;
@@ -100,6 +106,7 @@ namespace Axios
 
                         DataGridRow lastStationRow = new DataGridRow { DataContext = station, Item = station };
                         CurrentStationRowUUID = station.Item6;
+                        SetItemPositionValueOnPage(lastStationRow);
                         await StartPlayerAsync(lastStationRow, false);
                     }
                 }
@@ -136,9 +143,9 @@ namespace Axios
             }
         }
 
-        private async Task FormatResultsAsync(List<Tuple<string, string, string, string, int, string>> radioStations, int page = 1)
+        private Task FormatResultsAsync(List<Tuple<string, string, string, string, int, string>> radioStations, int page = 1)
         {
-            await Dispatcher.InvokeAsync(() =>
+            Dispatcher.Invoke(() =>
             {
                 StationsDataGrid.IsEnabled = false;
 
@@ -174,6 +181,7 @@ namespace Axios
                 {
                     //StationsDataGrid.ItemsSource = radioStations.GetRange(startIndex, radioStations.Count);
                     StationsDataGrid.ItemsSource = radioStations;
+                    //StationsDataGrid.DataContext = radioStations;
 
                     FavoriteBtn.Dispatcher.Invoke(() =>
                     {
@@ -206,6 +214,8 @@ namespace Axios
                 StationsDataGrid.IsEnabled = true;
 
             });
+
+            return Task.CompletedTask;
         }
 
         private async Task GatherStationsByNameAsync()
@@ -282,7 +292,7 @@ namespace Axios
                 _prevStationUrl = url;
                 _prevStationRowUUID = CurrentStationRowUUID;
                 CurrentStationRowUUID = uuid;
-                await SetPrevAndNextRows();
+                SetPrevAndNextRowsFromCurrent();
 
                 await UpdateStationBackgroundToCorrect(uuid);
             }
@@ -420,7 +430,7 @@ namespace Axios
             });
         }
 
-        private DataGridRow? GetSelectedRow(object sender)
+        private DataGridRow? GetSelectedRowFromClick(object sender)
         {
             if (!(sender is DataGrid)) { return null; }
             if (StationsDataGrid.SelectedItem == null) { return null; }
@@ -450,31 +460,35 @@ namespace Axios
             return correctRow;
         }
 
-        private async Task SetPrevAndNextRows()
+        private void SetPrevAndNextRowsFromCurrent()
         {
             var currentRow = GetSelectedRowByUUID(CurrentStationRowUUID);
-            
+
             if (currentRow == null) { return; }
-            int selectedIndex = StationsDataGrid.Items.IndexOf(currentRow.Item); 
+            int selectedIndex = StationsDataGrid.Items.IndexOf(currentRow.Item);
 
             if (selectedIndex > 0)
             {
                 var row = (DataGridRow)StationsDataGrid.ItemContainerGenerator.ContainerFromItem(StationsDataGrid.Items[selectedIndex - 1]);
-                _prevBtnStationRowUUID = (row.Item as Tuple<string, string, string, string, int, string>).Item6;
+                _prevRowUUID = (row.Item as Tuple<string, string, string, string, int, string>).Item6;
             }
 
             if (selectedIndex < StationsDataGrid.Items.Count - 1)
             {
                 var row = (DataGridRow)StationsDataGrid.ItemContainerGenerator.ContainerFromItem(StationsDataGrid.Items[selectedIndex + 1]);
-                _nextBtnStationRowUUID = (row.Item as Tuple<string, string, string, string, int, string>).Item6;
+                _nextRowUUID = (row.Item as Tuple<string, string, string, string, int, string>).Item6;
             }
         }
 
-        private DataGridRow? GetFirstRow()
+        private DataGridRow GetFirstRowOnPage()
         {
-            return (DataGridRow)StationsDataGrid.ItemContainerGenerator.ContainerFromItem(StationsDataGrid.Items[0]) ?? null;
+            return (DataGridRow)StationsDataGrid.ItemContainerGenerator.ContainerFromItem(StationsDataGrid.Items[0]);
         }
 
+        private DataGridRow GetLastRowOnPage()
+        {
+            return (DataGridRow)StationsDataGrid.ItemContainerGenerator.ContainerFromItem(StationsDataGrid.Items[_stationsPerPage - 1]);
+        }
         private List<Tuple<string, string, string, string, int, string>> GetCurrentDataGridAsTuple()
         {
             return StationsDataGrid.Items.Cast<Tuple<string, string, string, string, int, string>>().ToList();
@@ -505,6 +519,29 @@ namespace Axios
             return favoriteStations;
         }
 
+        private void SetItemPositionValueOnPage(DataGridRow row)
+        {
+            if (StationsDataGrid.Items.Count < 1) { return; }
+            
+            int rowIndex = row.GetIndex();
+
+            if (rowIndex == _stationsPerPage - 1)
+            {
+                _isLastItemOnPage = true;
+                _isFirstItemOnPage = false;
+            }
+            else if (rowIndex == 0)
+            {
+                _isLastItemOnPage = false;
+                _isFirstItemOnPage = true;
+            }
+            else
+            {
+                _isLastItemOnPage = false;
+                _isFirstItemOnPage = false;
+            }
+        }
+
         // EVENTS
         // -- Player
         private void EnablePlayerButtons()
@@ -527,13 +564,13 @@ namespace Axios
             });
         }
 
-        private async void StopPlayerBtn_OnClick(object sender, RoutedEventArgs e)
+        private void StopPlayerBtn_OnClick(object sender, RoutedEventArgs e)
         {
             if (AudioPlayer != null) { StopRadio(); }
             else
             {
                 // If no station is selected manually
-                DataGridRow? firstRow = GetFirstRow();
+                DataGridRow? firstRow = GetFirstRowOnPage();
                 if (firstRow == null) { return; }
                 _ = StartPlayerAsync(firstRow);
             }
@@ -543,24 +580,71 @@ namespace Axios
                 var currentRow = GetSelectedRowByUUID(CurrentStationRowUUID);
                 if (currentRow != null)
                 {
-                    await SetPrevAndNextRows();
+                    SetPrevAndNextRowsFromCurrent();
                     EnablePlayerButtons();
                 }
             }
         }
-        private void PrevStationBtn_OnClick(object sender, RoutedEventArgs e)
+
+        private async void PrevStationBtn_OnClick(object sender, RoutedEventArgs e)
         {
-            if (! string.IsNullOrEmpty(_prevBtnStationRowUUID))
+            var currentRow = GetSelectedRowByUUID(CurrentStationRowUUID);
+            if (currentRow != null) { SetItemPositionValueOnPage(currentRow); }
+
+            if (_isFirstItemOnPage)
             {
-                _ = StartPlayerAsync(GetSelectedRowByUUID(_prevBtnStationRowUUID));
+                PrevDataGridPageBtn_OnClick(sender, e);
+
+                while (StationsDataGrid.Items.Count == 0)
+                {
+                    await Task.Delay(100);
+                }
+
+                var row = new DataGridRow();
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    row = GetLastRowOnPage();
+                    _ = StartPlayerAsync(row);
+                });
+                SetItemPositionValueOnPage(row);
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(_prevRowUUID))
+            {
+                var row = GetSelectedRowByUUID(_prevRowUUID);
+                if (row != null) { _ = StartPlayerAsync(row); }
             }
         }
 
-        private void NextStationBtn_OnClick(object sender, RoutedEventArgs e)
+        private async void NextStationBtn_OnClick(object sender, RoutedEventArgs e)
         {
-            if (! string.IsNullOrEmpty(_nextBtnStationRowUUID))
+            var currentRow = GetSelectedRowByUUID(CurrentStationRowUUID);
+            if (currentRow != null) { SetItemPositionValueOnPage(currentRow); }
+
+            if (_isLastItemOnPage)
             {
-                _ = StartPlayerAsync(GetSelectedRowByUUID(_nextBtnStationRowUUID));
+                NextDataGridPageBtn_OnClick(sender, e);
+
+                while (StationsDataGrid.Items.Count == 0)
+                {
+                    await Task.Delay(100);
+                }
+
+                var row = new DataGridRow();
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    row = GetFirstRowOnPage();
+                    _ = StartPlayerAsync(row);
+                });
+                SetItemPositionValueOnPage(row);
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(_nextRowUUID))
+            {
+                var row = GetSelectedRowByUUID(_nextRowUUID);
+                if (row != null) { _ = StartPlayerAsync(row); }
             }
         }
 
@@ -617,7 +701,7 @@ namespace Axios
 
         private void StationsDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            DataGridRow? row = GetSelectedRow(sender);
+            DataGridRow? row = GetSelectedRowFromClick(sender);
 
             if (row != null)
             {
@@ -630,7 +714,7 @@ namespace Axios
         {
             if (e.Key != Key.Enter) { return; }
             e.Handled = true;
-            DataGridRow? row = GetSelectedRow(sender);
+            DataGridRow? row = GetSelectedRowFromClick(sender);
             
             if (row != null)
             {
