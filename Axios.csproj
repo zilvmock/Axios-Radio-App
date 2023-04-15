@@ -46,6 +46,7 @@
     <None Remove="Assets\skipNext.png" />
     <None Remove="Assets\skipPrevious.png" />
     <None Remove="Assets\stop.png" />
+    <None Remove="Assets\update.png" />
     <None Remove="Assets\volume.png" />
     <None Remove="Assets\volumeMute.png" />
     <None Remove="Axios_logo.png" />
@@ -111,6 +112,7 @@
     <Resource Include="Assets\stop.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
+    <Resource Include="Assets\update.png" />
     <Resource Include="Assets\volume.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>

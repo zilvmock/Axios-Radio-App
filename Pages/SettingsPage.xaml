@@ -49,7 +49,8 @@
         <Rectangle 
             Grid.Column="0"
             Grid.Row="1"
-            Grid.ColumnSpan="7"
+            Grid.RowSpan="2"
+            Grid.ColumnSpan="6"
             Width="Auto"
             Fill="#992B2B2B"
             Margin="30,0,10,0"
@@ -76,18 +77,20 @@
 
         <Button Name="SaveSettingsBtn"
                 Grid.Row="2"
-                Grid.Column="6"
+                Grid.Column="2"
+                Grid.ColumnSpan="2"
                 Content="Save"
                 Style="{StaticResource ButtonCustomStyle}"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
-                Height="24" Width="50"
+                Height="24" Width="100"
                 Click="SaveSettingsBtn_OnClick">
         </Button>
 
         <Rectangle Grid.Column="0"
                    Grid.Row="4"
-                   Grid.ColumnSpan="7"
+                   Grid.RowSpan="2"
+                   Grid.ColumnSpan="6"
                    Width="Auto"
                    Fill="#992B2B2B"
                    Margin="30,0,10,0"
@@ -95,35 +98,48 @@
                    RadiusY="10">
         </Rectangle>
 
-        <TextBlock Grid.Column="0"
+        <Image Name="UpdateIcon"
+               Grid.Row="4"
+               Grid.Column="0"
+               VerticalAlignment="Center"
+               HorizontalAlignment="Center"
+               Margin="30,0,0,0"
+               Source="../Assets/update.png"
+               Width="21"
+               Height="21"
+               RenderOptions.BitmapScalingMode="Fant">
+        </Image>
+
+        <TextBlock Grid.Column="1"
                    Grid.Row="4"
                    TextWrapping="Wrap"
                    Grid.ColumnSpan="6"
-                   Margin="60,10,30,0"
-                   Text="Update the cache of radio stations."
+                   Margin="00,10,30,0"
+                   Text="Update the cache of radio stations"
                    VerticalAlignment="Top"
                    Foreground="LightGray">
         </TextBlock>
 
-        <TextBlock Grid.Column="0"
+        <TextBlock Grid.Column="1"
                    Grid.Row="4"
                    TextWrapping="Wrap"
-                   Grid.ColumnSpan="6"
+                   Grid.ColumnSpan="5"
                    FontFamily="../Assets/Fonts/Roboto-Light.ttf #Roboto"
-                   Margin="60,0,30,5"
+                   Margin="0,0,30,5"
                    Text="This is not necessary, but you can do it if you want to ensure that you have the latest list."
                    VerticalAlignment="Bottom"
                    Foreground="LightGray">
         </TextBlock>
 
         <Button Name="UpdateStationsCacheBtn"
-                Grid.Row="4"
-                Grid.Column="6"
+                Grid.Row="5"
+                Grid.Column="2"
+                Grid.ColumnSpan="2"
                 Content="Update"
                 Style="{StaticResource ButtonCustomStyle}"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
-                Height="24" Width="60"
+                Height="24" Width="100"
                 Click="UpdateStationsCacheBtn_OnClick">
         </Button>
     </Grid>
