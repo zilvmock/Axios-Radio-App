@@ -15,13 +15,6 @@ Axios is a desktop application developed using .NET 7 and WPF framework. It prov
 - The application can run in the background.
 - Access quick controls in a tray.
 
-## Installation
-1. Download the latest release zip file [here](https://github.com/z1lvis/Axios/releases).
-2. Extract the contents. You should find two files in the extracted folder.
-3. Launch the `prerequisites.exe` file to install the necessary dependencies.
-4. If you extracted both files in the same folder, `AxiosSetup.exe` should launch automatically. If not, you can launch it manually. This is the application itself.
-5. Done! Once the installation is complete, you should see the application icon on your desktop.
-
 ## User Manual
 ### Navigation
 Currently, there are two main sections in the application: Radio Page and Settings Page. The Radio Page is the default main page when launching the application. You can switch between the pages using the side panel on the right side of the application.
