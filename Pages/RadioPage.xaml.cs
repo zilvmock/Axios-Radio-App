@@ -17,6 +17,7 @@ using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using Application = System.Windows.Application;
 using Axios.Data;
+using Control = System.Windows.Controls.Control;
 
 
 namespace Axios
@@ -701,15 +702,47 @@ namespace Axios
 
         private void StationsDataGrid_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key != Key.Enter) { return; }
-            e.Handled = true;
-            DataGridRow? row = GetSelectedRowFromClick(sender);
-            
-            if (row != null)
+            if (e.Key == Key.Enter)
             {
-                _ = StartPlayerAsync(row);
-                EnablePlayerButtons();
+                e.Handled = true;
+                DataGridRow? row = GetSelectedRowFromClick(sender);
+
+                if (row != null)
+                {
+                    _ = StartPlayerAsync(row);
+                    EnablePlayerButtons();
+                }
             }
+            else if (e.Key == Key.Left)
+            {
+                PrevDataGridPageBtn_OnClick(sender, e);
+                StationsDataGrid.SelectedIndex = 0;
+            }
+            else if (e.Key == Key.Right)
+            {
+                NextDataGridPageBtn_OnClick(sender, e);
+                StationsDataGrid.SelectedIndex = 0;
+            }
+            else if (e.Key == Key.Up)
+            {
+                if (StationsDataGrid.SelectedIndex > 0)
+                {
+                    StationsDataGrid.SelectedIndex--;
+                }
+            }
+            else if (e.Key == Key.Down)
+            {
+                if (StationsDataGrid.SelectedIndex < StationsDataGrid.Items.Count - 1)
+                {
+                    StationsDataGrid.SelectedIndex++;
+                }
+            }
+
+            Dispatcher.BeginInvoke(() =>
+            {
+                StationsDataGrid.Focus();
+            });
+            Keyboard.Focus(StationsDataGrid);
         }
 
         private void MenuItem_Add_Click(object sender, RoutedEventArgs e)
