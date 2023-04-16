@@ -37,11 +37,13 @@
     <None Remove="Assets\Fonts\Roboto-Thin.ttf" />
     <None Remove="Assets\Fonts\Roboto-ThinItalic.ttf" />
     <None Remove="Assets\loading.gif" />
+    <None Remove="Assets\logo.png" />
     <None Remove="Assets\minimize.png" />
     <None Remove="Assets\pause.png" />
     <None Remove="Assets\play.png" />
     <None Remove="Assets\radio.png" />
     <None Remove="Assets\search.png" />
+    <None Remove="Assets\search_w.png" />
     <None Remove="Assets\settings.png" />
     <None Remove="Assets\skipNext.png" />
     <None Remove="Assets\skipPrevious.png" />
@@ -63,6 +65,9 @@
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Assets\arrowForward.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Assets\logo.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Assets\close.png" />
@@ -100,6 +105,9 @@
     <Resource Include="Assets\search.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
+    <Resource Include="Assets\search_w.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Assets\settings.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
@@ -119,7 +127,9 @@
     <Resource Include="Assets\volumeMute.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Axios_logo.png" />
+    <Resource Include="Axios_logo.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
 
   <ItemGroup>
