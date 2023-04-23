@@ -63,20 +63,22 @@ namespace Axios
 
             // Save favorite stations
             AppSettings.FavoriteStations = RadioPage.GetFavoriteStationsAsCollection();
-            Settings.Default.Save();
 
             // Save last station
             AppSettings.LastStation = RadioPage.GetCurrentStationAsCollection();
+
+            // Save first launch
+            AppSettings.FirstLaunch = false;
+            
             AppSettings.Save();
 
             RadioPage.StopRadio();
-
             NotifyIcon.Dispose();
         }
 
         private async void Window_Closing(object? sender, CancelEventArgs e)
         {
-            if (Settings.Default.MinimizeOnExit)
+            if (AppSettings.MinimizeOnExit)
             {
                 e.Cancel = true;
                 Hide();

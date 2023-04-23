@@ -1,18 +1,20 @@
-﻿<Page x:Class="Axios.SettingsPage"
-      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-      mc:Ignorable="d" 
-      d:DesignHeight="Auto" d:DesignWidth="Auto"
-      Title="Settings"
-      Background="#15151C"
-      FontFamily="/Assets/Fonts/Roboto-Medium.ttf #Roboto">
+﻿<Page
+    x:Class="Axios.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="Settings"
+    d:DesignHeight="Auto"
+    d:DesignWidth="Auto"
+    Background="#15151C"
+    FontFamily="/Assets/Fonts/Roboto-Medium.ttf #Roboto"
+    mc:Ignorable="d">
 
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Styles/CustomStyles.xaml"/>
+                <ResourceDictionary Source="/Styles/CustomStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Page.Resources>
@@ -20,127 +22,128 @@
     <Grid>
         <Grid.Background>
             <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Offset="0" Color="#FF6B635A"/>
-                <GradientStop Offset="1" Color="#FF2B2B2B"/>
+                <GradientStop Offset="0" Color="#FF6B635A" />
+                <GradientStop Offset="1" Color="#FF2B2B2B" />
             </LinearGradientBrush>
         </Grid.Background>
         <Grid.RowDefinitions>
-            <RowDefinition Height="50"/>
-            <RowDefinition Height="50"/>
-            <RowDefinition Height="50"/>
-            <RowDefinition Height="50"/>
-            <RowDefinition Height="50"/>
-            <RowDefinition Height="50"/>
-            <RowDefinition Height="50"/>
-            <RowDefinition Height="50"/>
-            <RowDefinition Height="50"/>
-            <RowDefinition Height="50"/>
+            <RowDefinition Height="50" />
+            <RowDefinition Height="50" />
+            <RowDefinition Height="50" />
+            <RowDefinition Height="50" />
+            <RowDefinition Height="50" />
+            <RowDefinition Height="50" />
+            <RowDefinition Height="50" />
+            <RowDefinition Height="50" />
+            <RowDefinition Height="50" />
+            <RowDefinition Height="50" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="100"/>
-            <ColumnDefinition Width="100"/>
-            <ColumnDefinition Width="100"/>
-            <ColumnDefinition Width="100"/>
-            <ColumnDefinition Width="100"/>
-            <ColumnDefinition Width="100"/>
-            <ColumnDefinition Width="100"/>
+            <ColumnDefinition Width="100" />
+            <ColumnDefinition Width="100" />
+            <ColumnDefinition Width="100" />
+            <ColumnDefinition Width="100" />
+            <ColumnDefinition Width="100" />
+            <ColumnDefinition Width="100" />
+            <ColumnDefinition Width="100" />
         </Grid.ColumnDefinitions>
 
-        <Rectangle 
-            Grid.Column="0"
+        <Rectangle
             Grid.Row="1"
             Grid.RowSpan="2"
+            Grid.Column="0"
             Grid.ColumnSpan="6"
             Width="Auto"
-            Fill="#992B2B2B"
             Margin="30,0,10,0"
+            Fill="#992B2B2B"
             RadiusX="10"
-            RadiusY="10">
-        </Rectangle>
+            RadiusY="10" />
 
-        <CheckBox Name="MinimizeOnCloseCheckBox"
-                  Style="{StaticResource CheckBoxCustomStyle}"
-                  Grid.Column="0"
-                  Grid.Row="1"
-                  VerticalAlignment="Center"
-                  HorizontalAlignment="Center"
-                  Margin="30,0,0,0">
-        </CheckBox>
+        <CheckBox
+            Name="MinimizeOnCloseCheckBox"
+            Grid.Row="1"
+            Grid.Column="0"
+            Margin="30,0,0,0"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Style="{StaticResource CheckBoxCustomStyle}" />
 
-        <TextBlock Grid.Column="1"
-                   Grid.Row="1"
-                   Grid.ColumnSpan="5"
-                   Text="Close button should minimize window"
-                   VerticalAlignment="Center"
-                   Foreground="LightGray">
-        </TextBlock>
+        <TextBlock
+            Grid.Row="1"
+            Grid.Column="1"
+            Grid.ColumnSpan="5"
+            VerticalAlignment="Center"
+            Foreground="LightGray"
+            Text="Close button should minimize window" />
 
-        <Button Name="SaveSettingsBtn"
-                Grid.Row="2"
-                Grid.Column="2"
-                Grid.ColumnSpan="2"
-                Content="Save"
-                Style="{StaticResource ButtonCustomStyle}"
-                VerticalAlignment="Center"
-                HorizontalAlignment="Center"
-                Height="24" Width="100"
-                Click="SaveSettingsBtn_OnClick">
-        </Button>
+        <Button
+            Name="SaveSettingsBtn"
+            Grid.Row="2"
+            Grid.Column="2"
+            Grid.ColumnSpan="2"
+            Width="100"
+            Height="24"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Click="SaveSettingsBtn_OnClick"
+            Content="Save"
+            Style="{StaticResource ButtonCustomStyle}" />
 
-        <Rectangle Grid.Column="0"
-                   Grid.Row="4"
-                   Grid.RowSpan="2"
-                   Grid.ColumnSpan="6"
-                   Width="Auto"
-                   Fill="#992B2B2B"
-                   Margin="30,0,10,0"
-                   RadiusX="10"
-                   RadiusY="10">
-        </Rectangle>
+        <Rectangle
+            Grid.Row="4"
+            Grid.RowSpan="2"
+            Grid.Column="0"
+            Grid.ColumnSpan="6"
+            Width="Auto"
+            Margin="30,0,10,0"
+            Fill="#992B2B2B"
+            RadiusX="10"
+            RadiusY="10" />
 
-        <Image Name="UpdateIcon"
-               Grid.Row="4"
-               Grid.Column="0"
-               VerticalAlignment="Center"
-               HorizontalAlignment="Center"
-               Margin="30,0,0,0"
-               Source="/Assets/update.png"
-               Width="21"
-               Height="21"
-               RenderOptions.BitmapScalingMode="Fant">
-        </Image>
+        <Image
+            Name="UpdateIcon"
+            Grid.Row="4"
+            Grid.Column="0"
+            Width="21"
+            Height="21"
+            Margin="30,0,0,0"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            RenderOptions.BitmapScalingMode="Fant"
+            Source="/Assets/update.png" />
 
-        <TextBlock Grid.Column="1"
-                   Grid.Row="4"
-                   TextWrapping="Wrap"
-                   Grid.ColumnSpan="6"
-                   Margin="00,10,30,0"
-                   Text="Update the cache of radio stations"
-                   VerticalAlignment="Top"
-                   Foreground="LightGray">
-        </TextBlock>
+        <TextBlock
+            Grid.Row="4"
+            Grid.Column="1"
+            Grid.ColumnSpan="6"
+            Margin="00,10,30,0"
+            VerticalAlignment="Top"
+            Foreground="LightGray"
+            Text="Update the cache of radio stations"
+            TextWrapping="Wrap" />
 
-        <TextBlock Grid.Column="1"
-                   Grid.Row="4"
-                   TextWrapping="Wrap"
-                   Grid.ColumnSpan="5"
-                   FontFamily="/Assets/Fonts/Roboto-Light.ttf #Roboto"
-                   Margin="0,0,30,5"
-                   Text="This is not necessary, but you can do it if you want to ensure that you have the latest list."
-                   VerticalAlignment="Bottom"
-                   Foreground="LightGray">
-        </TextBlock>
+        <TextBlock
+            Grid.Row="4"
+            Grid.Column="1"
+            Grid.ColumnSpan="5"
+            Margin="0,0,30,5"
+            VerticalAlignment="Bottom"
+            FontFamily="/Assets/Fonts/Roboto-Light.ttf #Roboto"
+            Foreground="LightGray"
+            Text="This is not necessary, but you can do it if you want to ensure that you have the latest list."
+            TextWrapping="Wrap" />
 
-        <Button Name="UpdateStationsCacheBtn"
-                Grid.Row="5"
-                Grid.Column="2"
-                Grid.ColumnSpan="2"
-                Content="Update"
-                Style="{StaticResource ButtonCustomStyle}"
-                VerticalAlignment="Center"
-                HorizontalAlignment="Center"
-                Height="24" Width="100"
-                Click="UpdateStationsCacheBtn_OnClick">
-        </Button>
+        <Button
+            Name="UpdateStationsCacheBtn"
+            Grid.Row="5"
+            Grid.Column="2"
+            Grid.ColumnSpan="2"
+            Width="100"
+            Height="24"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Click="UpdateStationsCacheBtn_OnClick"
+            Content="Update"
+            Style="{StaticResource ButtonCustomStyle}" />
     </Grid>
 </Page>
