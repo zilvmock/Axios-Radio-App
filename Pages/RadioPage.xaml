@@ -72,7 +72,7 @@
             MaxLength="42"
             PreviewKeyDown="SearchTextBox_PreviewKeyDown"
             Style="{StaticResource TextBoxCustomStyle}"
-            TextWrapping="Wrap" />
+            TextWrapping="NoWrap" />
 
         <ToggleButton
             Name="SearchBtn"

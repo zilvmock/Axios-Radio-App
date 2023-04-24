@@ -13,11 +13,17 @@ using Application = System.Windows.Application;
 using Size = System.Drawing.Size;
 using MouseEventArgs = System.Windows.Forms.MouseEventArgs;
 using Axios.Properties;
+using System.Threading;
+using System.Diagnostics.Metrics;
+using System.Xml.Linq;
+using MessageBox = System.Windows.MessageBox;
 
 namespace Axios
 {
     public partial class MainWindow : Window
     {
+        private static Mutex _mutex = null;
+
         public Window mainWindow => this;
         public static NotifyIcon NotifyIcon { get; set; }
         private bool _runInBackgroundShowed;
@@ -35,9 +41,18 @@ namespace Axios
 
         public MainWindow()
         {
+            _mutex = new Mutex(true, "AxiosMutex", out var createdNew);
+            
+            if (!createdNew)
+            {
+                MessageBox.Show("Another instance of the application is already running.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Application.Current.Shutdown();
+                return;
+            }
+
             Data.Resources.InitializeTempDir();
             InitializeComponent();
-            AppSettings = new Settings();
+            AppSettings = Settings.Default;
             MWContentFrame.NavigationUIVisibility = NavigationUIVisibility.Hidden;
             Application.Current.Exit += OnApplicationExit;
             Closing += Window_Closing;
@@ -61,16 +76,10 @@ namespace Axios
         {
             _isExiting = true;
 
-            // Save favorite stations
-            AppSettings.FavoriteStations = RadioPage.GetFavoriteStationsAsCollection();
-
-            // Save last station
-            AppSettings.LastStation = RadioPage.GetCurrentStationAsCollection();
-
-            // Save first launch
-            AppSettings.FirstLaunch = false;
-            
-            AppSettings.Save();
+            Settings.Default.FavoriteStations = RadioPage.GetFavoriteStationsAsCollection();
+            Settings.Default.LastStation = RadioPage.GetCurrentStationAsCollection();
+            Settings.Default.FirstLaunch = false;
+            Settings.Default.Save();
 
             RadioPage.StopRadio();
             NotifyIcon.Dispose();
