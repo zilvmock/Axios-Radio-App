@@ -16,13 +16,14 @@ namespace Axios
             this._mainWindow = mainWindow;
         }
 
-        private void RadioStationsBtn_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private async void RadioStationsBtn_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (IsRadioShowing == false)
             {
                 IsSettingsShowing = !IsSettingsShowing;
                 IsRadioShowing = !IsRadioShowing;
                 _mainWindow.MWContentFrame.Content = MainWindow.RadioPage;
+                await MainWindow.RadioPage.RefreshPageItems();
             }
         }
 

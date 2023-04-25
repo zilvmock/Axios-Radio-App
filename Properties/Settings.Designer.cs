@@ -68,5 +68,28 @@ namespace Axios.Properties {
                 this["FirstLaunch"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastVoteUUID {
+            get {
+                return ((string)(this["LastVoteUUID"]));
+            }
+            set {
+                this["LastVoteUUID"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::System.DateTime LastVoteTime {
+            get {
+                return ((global::System.DateTime)(this["LastVoteTime"]));
+            }
+            set {
+                this["LastVoteTime"] = value;
+            }
+        }
     }
 }

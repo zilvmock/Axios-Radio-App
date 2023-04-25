@@ -158,17 +158,14 @@
                 ScrollViewer.VerticalScrollBarVisibility="Disabled"
                 SelectionMode="Single">
                 <DataGrid.ContextMenu>
-                    <ContextMenu>
+                    <ContextMenu Style="{StaticResource DataGridContextMenuCustomStyle}">
                         <MenuItem
                             Name="FavoriteAddBtn"
                             Click="MenuItem_Add_Click"
                             Header="Add to favorites"
                             Style="{StaticResource DataGridContextMenuItemCustomStyle}">
                             <MenuItem.Icon>
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Source="/Assets/favorite.png" />
+                                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE734;" />
                             </MenuItem.Icon>
                         </MenuItem>
                         <MenuItem
@@ -177,10 +174,16 @@
                             Header="Remove"
                             Style="{StaticResource DataGridContextMenuItemCustomStyle}">
                             <MenuItem.Icon>
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Source="/Assets/exit.png" />
+                                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8D9;" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem
+                            Name="VoteForStationBtn"
+                            Click="MenuItem_Vote_Click"
+                            Header="Vote"
+                            Style="{StaticResource DataGridContextMenuItemCustomStyle}">
+                            <MenuItem.Icon>
+                                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8E1;" />
                             </MenuItem.Icon>
                         </MenuItem>
                     </ContextMenu>

@@ -16,6 +16,7 @@ using Axios.Properties;
 using System.Threading;
 using System.Diagnostics.Metrics;
 using System.Xml.Linq;
+using ABI.Windows.Devices.Radios;
 using MessageBox = System.Windows.MessageBox;
 
 namespace Axios
@@ -29,8 +30,8 @@ namespace Axios
         private bool _runInBackgroundShowed;
         private bool _isExiting;
         public static RadioPage RadioPage { get; set; }
-        public static SettingsPage SettingsPage {get; set; }
-        public static SidePanel SidePanel {get; set; }
+        public static SettingsPage SettingsPage { get; set; }
+        public static SidePanel SidePanel { get; set; }
         public static Settings AppSettings { get; set; }
 
         public Frame MWContentFrame
@@ -42,7 +43,7 @@ namespace Axios
         public MainWindow()
         {
             _mutex = new Mutex(true, "AxiosMutex", out var createdNew);
-            
+
             if (!createdNew)
             {
                 MessageBox.Show("Another instance of the application is already running.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -52,8 +53,8 @@ namespace Axios
 
             Data.Resources.InitializeTempDir();
             InitializeComponent();
-            AppSettings = Settings.Default;
             MWContentFrame.NavigationUIVisibility = NavigationUIVisibility.Hidden;
+            AppSettings = Settings.Default;
             Application.Current.Exit += OnApplicationExit;
             Closing += Window_Closing;
             RadioPage = new RadioPage();
@@ -79,6 +80,8 @@ namespace Axios
             Settings.Default.FavoriteStations = RadioPage.GetFavoriteStationsAsCollection();
             Settings.Default.LastStation = RadioPage.GetCurrentStationAsCollection();
             Settings.Default.FirstLaunch = false;
+            Settings.Default.LastVoteTime = RadioPage.Search.LastVoteTime;
+            Settings.Default.LastVoteUUID = RadioPage.Search.LastVoteUUID;
             Settings.Default.Save();
 
             RadioPage.StopRadio();
@@ -96,7 +99,7 @@ namespace Axios
                     await Task.Delay(1000);
                     await Task.Run(() =>
                     {
-                        if (_isExiting == false) 
+                        if (_isExiting == false)
                         {
                             NotifyIcon.ShowBalloonTip(500, "Axios", "Axios will continue to run in the background.", ToolTipIcon.Info);
                             _runInBackgroundShowed = true;
@@ -122,19 +125,19 @@ namespace Axios
             NotifyIcon.ContextMenuStrip.Size = new Size(150, 115);
             NotifyIcon.ContextMenuStrip.ImageScalingSize = new Size(0, 0);
 
-            NotifyIcon.ContextMenuStrip.Items.Add(new ToolStripButton("Play/Pause", null, OnPlayPauseClick)
-            { AutoSize = false, Dock = DockStyle.Left, Width = 110, TextAlign = ContentAlignment.MiddleLeft });
+            NotifyIcon.ContextMenuStrip.Items.Add(new ToolStripButton("Play/Pause", null, OnPlayPauseClick) 
+                { AutoSize = false, Dock = DockStyle.Left, Width = 110, TextAlign = ContentAlignment.MiddleLeft });
 
             NotifyIcon.ContextMenuStrip.Items.Add(new ToolStripButton("Volume Up (+2)", null, OnVolumeUpClick)
-            { AutoSize = false, Dock = DockStyle.Left, Width = 110, TextAlign = ContentAlignment.MiddleLeft });
+                { AutoSize = false, Dock = DockStyle.Left, Width = 110, TextAlign = ContentAlignment.MiddleLeft });
 
             NotifyIcon.ContextMenuStrip.Items.Add(new ToolStripButton("Volume Down (-2)", null, OnVolumeDownClick)
-            { AutoSize = false, Dock = DockStyle.Left, Width = 110, TextAlign = ContentAlignment.MiddleLeft });
+                { AutoSize = false, Dock = DockStyle.Left, Width = 110, TextAlign = ContentAlignment.MiddleLeft });
 
             NotifyIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
 
             NotifyIcon.ContextMenuStrip.Items.Add(new ToolStripButton("Exit", null, OnExitClick)
-            { AutoSize = false, Dock = DockStyle.Left, Width = 110, TextAlign = ContentAlignment.MiddleLeft });
+                { AutoSize = false, Dock = DockStyle.Left, Width = 110, TextAlign = ContentAlignment.MiddleLeft });
 
             NotifyIcon.Visible = true;
         }
@@ -174,7 +177,7 @@ namespace Axios
 
         // -- Custom Title Bar
         private void UIElement_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        { 
+        {
             if (e.ChangedButton == MouseButton.Left)
             {
                 if (Application.Current.MainWindow != null) Application.Current.MainWindow.DragMove();

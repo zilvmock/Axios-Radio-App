@@ -226,6 +226,30 @@
         </Style.Triggers>
     </Style>
 
+    <Style x:Key="DataGridContextMenuCustomStyle" TargetType="{x:Type ContextMenu}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ContextMenu}">
+                    <Border BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="5"
+                            Margin="10"
+                            Padding="4">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="12"
+                                              ShadowDepth="0"
+                                              Direction="0"
+                                              Opacity="0.5"
+                                              Color="Black"/>
+                        </Border.Effect>
+                        <StackPanel IsItemsHost="True" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="DataGridContextMenuItemCustomStyle" TargetType="{x:Type MenuItem}">
         <Setter Property="Background" Value="#EEEEEE" />
         <Setter Property="BorderBrush" Value="Transparent" />
@@ -236,9 +260,11 @@
                 <ControlTemplate TargetType="{x:Type MenuItem}">
                     <Border
                         x:Name="Border"
-                        Background="{TemplateBinding Background}"
+                        Background="Transparent"
                         BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}">
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="5"
+                        Margin="2">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -247,8 +273,9 @@
                             <ContentPresenter
                                 x:Name="Icon"
                                 Grid.Column="0"
-                                Margin="4,0,4,0"
+                                Margin="6,0,14,0"
                                 VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
                                 Content="{TemplateBinding Icon}" />
                             <ContentPresenter
                                 x:Name="HeaderHost"
@@ -270,9 +297,6 @@
                         <Trigger Property="IsHighlighted" Value="True">
                             <Setter TargetName="Border" Property="Background" Value="#FD7014" />
                             <Setter TargetName="Border" Property="BorderBrush" Value="#FD7014" />
-                        </Trigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Foreground" Value="Gray" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

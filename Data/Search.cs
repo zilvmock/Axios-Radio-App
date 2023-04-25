@@ -12,19 +12,25 @@ using System.Text.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using System.Xml.Linq;
 using Axios.Data;
+using System.Text.RegularExpressions;
 
 namespace Axios.data
 {
-    internal class Search
+    public class Search
     {
-        private static string API_URL = string.Empty;
+        private static string API_URL;
+        public DateTime LastVoteTime { get; set; }
+        public string LastVoteUUID { get; set; }
 
         public string SearchPhrase { get; set; }
 
         public Search()
         {
             if (!File.Exists(Resources.CACHE_FILE_PATH)) { File.Create(Resources.CACHE_FILE_PATH); }
+
             API_URL = API.GetRadioBrowserApiUrl();
+            LastVoteTime = DateTime.MinValue;
+            LastVoteUUID = string.Empty;
         }
 
         public async Task GetAllStations()
@@ -46,9 +52,10 @@ namespace Axios.data
 
             response.Dispose();
             httpClient.Dispose();
-            _ = stream.DisposeAsync();
+            await stream.DisposeAsync();
             reader.Dispose();
             jsonReader.Close();
+            Resources.EnforceClean();
         }
 
         private async Task ParseJArrayToStationsList(JsonTextReader jsonReader)
@@ -60,9 +67,19 @@ namespace Axios.data
                 if (jsonReader.TokenType == JsonToken.StartObject)
                 {
                     Tuple<string, string, string, string, int, string> tuple = await ParseJsonObjectToTuple(jsonReader);
-                    if (tuple != null && !string.IsNullOrEmpty(tuple.Item2))
+                    if (tuple != null && !string.IsNullOrWhiteSpace(tuple.Item2) && !string.IsNullOrEmpty(tuple.Item2))
                     {
-                        namesList.Add(tuple);
+                        string modifiedItem2 = tuple.Item2.TrimStart('\t').Replace("\n", "").Replace("\t", "");
+                        modifiedItem2 = Regex.Replace(modifiedItem2, @"\s{3,}", " ").Trim();
+                        var tempTuple = new Tuple<string, string, string, string, int, string>(
+                            tuple.Item1,
+                            modifiedItem2,
+                            tuple.Item3,
+                            tuple.Item4,
+                            tuple.Item5,
+                            tuple.Item6
+                        );
+                        namesList.Add(tempTuple);
                     }
                 }
                 else if (jsonReader.TokenType == JsonToken.EndArray)
@@ -73,6 +90,7 @@ namespace Axios.data
 
             await SaveToJson(namesList.Distinct().ToList());
         }
+
         private async Task<Tuple<string, string, string, string, int, string>> ParseJsonObjectToTuple(JsonTextReader jsonReader)
         {
             string url = "";
@@ -129,7 +147,6 @@ namespace Axios.data
                 string json = JsonConvert.SerializeObject(list, Formatting.Indented);
                 File.WriteAllText(Resources.CACHE_FILE_PATH, json);
             });
-            Resources.EnforceClean();
         }
 
         private static Tuple<string, string, string, string, int, string> ReadStation(JsonTextReader reader)
@@ -227,7 +244,7 @@ namespace Axios.data
         public List<Tuple<string, string, string, string, int, string>> GetPageOfStations(int from, int to, List<Tuple<string, string, string, string, int, string>> stations)
         {
             List<Tuple<string, string, string, string, int, string>> stationsInRange = new();
-            
+
             for (int i = from; i < to && i < stations.Count; i++)
             {
                 Tuple<string, string, string, string, int, string> station = stations[i];
@@ -235,6 +252,66 @@ namespace Axios.data
             }
 
             return stationsInRange;
+        }
+
+        public async Task CountStationClick(string uuid)
+        {
+            if (string.IsNullOrEmpty(uuid)) { return; }
+            await new HttpClient().GetAsync($"http://{API_URL}/json/url/{uuid}");
+        }
+
+        public async Task VoteForStation(string uuid)
+        {
+            if (string.IsNullOrEmpty(uuid)) { return; }
+            if (DateTime.Now - LastVoteTime < TimeSpan.FromMinutes(10) && LastVoteUUID.Equals(uuid)) { return; }
+            LastVoteTime = DateTime.Now;
+            LastVoteUUID = uuid;
+            await new HttpClient().GetAsync($"http://{API_URL}/json/vote/{uuid}");
+
+            // Update votes in cache file
+            await Task.Run(() =>
+            {
+                JObject targetObject = null;
+                JArray jsonArray = null;
+                using (var fileStream = new FileStream(Resources.CACHE_FILE_PATH, FileMode.Open, FileAccess.Read, FileShare.Read))
+                using (var streamReader = new StreamReader(fileStream))
+                using (var jsonReader = new JsonTextReader(streamReader))
+                {
+                    jsonArray = JArray.Load(jsonReader);
+                    foreach (JObject obj in jsonArray.OfType<JObject>())
+                    {
+                        string fileUUID = obj["Item6"].ToString();
+                        if (uuid != fileUUID) continue;
+                        targetObject = obj;
+                        break;
+                    }
+                }
+
+                if (targetObject != null)
+                {
+                    int newVoteCount = (int)targetObject["Item5"] + 1;
+                    targetObject["Item5"] = newVoteCount;
+
+                    for (int i = 0; i < jsonArray.Count; i++)
+                    {
+                        if (jsonArray[i] == targetObject)
+                        {
+                            jsonArray[i] = targetObject;
+                            break;
+                        }
+                    }
+
+                    using (var fileStreamWrite = new FileStream(Resources.CACHE_FILE_PATH, FileMode.Create, FileAccess.Write))
+                    using (var streamWriter = new StreamWriter(fileStreamWrite))
+                    using (var jsonWriter = new JsonTextWriter(streamWriter))
+                    {
+                        jsonWriter.Formatting = Formatting.Indented;
+                        jsonArray.WriteTo(jsonWriter);
+                    }
+                }
+
+                Resources.EnforceClean();
+            });
         }
     }
 }

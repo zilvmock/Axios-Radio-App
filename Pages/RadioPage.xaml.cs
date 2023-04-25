@@ -1,6 +1,7 @@
 ﻿using Axios.data;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Drawing;
 using System.Drawing.Text;
@@ -37,11 +38,10 @@ namespace Axios
     {
         public Player? AudioPlayer;
         private static Thread? _playerThread;
-        private Search _search = new();
+        public Search Search = new();
         private List<Tuple<string, string, string, string, int, string>> _radioStations;
         private List<Tuple<string, string, string, string, int, string>> _currentStations;
-        //private string _prevStationUrl = string.Empty;
-        
+
         private string? _prevStationRowUUID;
         private static string _currentStationRowUUID;
 
@@ -169,6 +169,10 @@ namespace Axios
                     MainWindow.NotifyIcon.ShowBalloonTip(500, "Axios", "Failed to load Favorite Stations! If this happens again please report an issue.", ToolTipIcon.Error);
                 }
             }
+
+            // Grab vote data
+            Search.LastVoteTime = MainWindow.AppSettings.LastVoteTime;
+            Search.LastVoteUUID = MainWindow.AppSettings.LastVoteUUID;
         }
 
         private Task FormatResultsAsync(List<Tuple<string, string, string, string, int, string>> radioStations)
@@ -222,25 +226,22 @@ namespace Axios
 
         private async Task GatherStationsByNameAsync()
         {
-            if (_search == null) { _search = new Search(); }
+            if (Search.SearchPhrase == SearchTextBox.Text && (_top100StationsIsShowing || _favoriteStationsIsShowing)) { return;}
 
-            if (_search.SearchPhrase == SearchTextBox.Text && (_top100StationsIsShowing || _favoriteStationsIsShowing)) { return;}
-
-            _search.SearchPhrase = SearchTextBox.Text;
-            _radioStations = _search.GetByName();
+            Search.SearchPhrase = SearchTextBox.Text;
+            _radioStations = Search.GetByName();
             Tuple<int, int> pagesRange = GetPageRange(_currentPage);
-            _radioStations = _search.GetPageOfStations(pagesRange.Item1, pagesRange.Item2, _radioStations);
+            _radioStations = Search.GetPageOfStations(pagesRange.Item1, pagesRange.Item2, _radioStations);
             _resultsType = "search";
             await FormatResultsAsync(_radioStations);
         }
 
         private async Task GatherStationsByVotesAsync()
         {
-            if (_search == null) { _search = new Search(); }
             if (! _top100StationsIsShowing) { return; }
-            _radioStations = _search.GetByVotes();
+            _radioStations = Search.GetByVotes();
             Tuple<int, int> pagesRange = GetPageRange(_currentPage);
-            _radioStations = _search.GetPageOfStations(pagesRange.Item1, pagesRange.Item2, _radioStations);
+            _radioStations = Search.GetPageOfStations(pagesRange.Item1, pagesRange.Item2, _radioStations);
             _resultsType = "votes";
             await FormatResultsAsync(_radioStations);
         }
@@ -312,6 +313,7 @@ namespace Axios
             }
             finally
             {
+                await Search.CountStationClick(_currentStationRowUUID);
                 Dispatcher.Invoke(() => { StationsDataGrid.IsEnabled = true; StationsDataGrid.Focus(); });
                 EnablePlayerButtons();
                 SetPrevAndNextRowsFromCurrent();
@@ -492,6 +494,7 @@ namespace Axios
         {
             return (DataGridRow)StationsDataGrid.ItemContainerGenerator.ContainerFromItem(StationsDataGrid.Items[StationsPerPage - 1]);
         }
+
         private List<Tuple<string, string, string, string, int, string>> GetCurrentDataGridAsTuple()
         {
             return StationsDataGrid.Items.Cast<Tuple<string, string, string, string, int, string>>().ToList();
@@ -543,6 +546,40 @@ namespace Axios
                 _isLastItemOnPage = false;
                 _isFirstItemOnPage = false;
             }
+        }
+
+        public async Task RefreshPageItems()
+        {
+            int selectedIndex = StationsDataGrid.SelectedIndex;
+            StationsDataGrid.ItemsSource = null;
+            StationsDataGrid.Items.Clear();
+            var range = GetPageRange(_currentPage);
+            if (_resultsType.Equals("votes"))
+            {
+                _radioStations = Search.GetByVotes();
+                _radioStations = Search.GetPageOfStations(range.Item1, range.Item2, _radioStations);
+            }
+            else if (_resultsType.Equals("search"))
+            {
+                _radioStations = Search.GetByName();
+                _radioStations = Search.GetPageOfStations(range.Item1, range.Item2, _radioStations);
+            }
+            else
+            {
+                await FormatResultsAsync(_favoriteStations);
+                await UpdateStationBackgroundToCorrect(_currentStationRowUUID);
+                StationsDataGrid.IsEnabled = true;
+                return;
+            }
+
+            await FormatResultsAsync(_radioStations);
+            await UpdateStationBackgroundToCorrect(_currentStationRowUUID);
+
+            if (selectedIndex != -1)
+            {
+                StationsDataGrid.SelectedIndex = selectedIndex;
+            }
+            StationsDataGrid.IsEnabled = true;
         }
 
         // -- Player
@@ -882,6 +919,15 @@ namespace Axios
             }
         }
 
+        private async void MenuItem_Vote_Click(object sender, RoutedEventArgs e)
+        {
+            StationsDataGrid.IsEnabled = false;
+            var selected = StationsDataGrid.SelectedItem as Tuple<string?, string, string, string, int, string>;
+            if (selected == null) { return; }
+            await Search.VoteForStation(selected.Item6);
+            await RefreshPageItems();
+        }
+
         private void SearchTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter) { _ = GatherStationsByNameAsync(); }
@@ -907,17 +953,16 @@ namespace Axios
             
             if (_resultsType.Equals("votes"))
             {
-                _radioStations = _search.GetByVotes();
+                _radioStations = Search.GetByVotes();
             }
             else if (_resultsType.Equals("search"))
             {
-                _radioStations = _search.GetByName();
+                _radioStations = Search.GetByName();
             }
 
             CurrentDataGridPageLabel.Dispatcher.Invoke(() => { CurrentDataGridPageLabel.Content = _currentPage.ToString(); });
-            int startIndex = (StationsPerPage * _currentPage) - StationsPerPage;
-            int endIndex = StationsPerPage * _currentPage;
-            _radioStations = _search.GetPageOfStations(startIndex, endIndex, _radioStations);
+            var range = GetPageRange(_currentPage);
+            _radioStations = Search.GetPageOfStations(range.Item1, range.Item2, _radioStations);
             await FormatResultsAsync(_radioStations);
             await UpdateStationBackgroundToCorrect(_currentStationRowUUID);
         }
@@ -926,22 +971,21 @@ namespace Axios
         {
             if (_isLastPage) { return; }
             _currentPage += 1;
-            int startIndex = (StationsPerPage * _currentPage) - StationsPerPage;
-            int endIndex = StationsPerPage * _currentPage;
-            
+            var range = GetPageRange(_currentPage);
+
             if (_resultsType.Equals("votes"))
             {
-                _radioStations = _search.GetByVotes();
+                _radioStations = Search.GetByVotes();
             }
             else if (_resultsType.Equals("search"))
             {
-                _radioStations = _search.GetByName();
+                _radioStations = Search.GetByName();
             }
 
             int lastPageItemCount = _radioStations.Count - StationsPerPage;
-            _radioStations = _search.GetPageOfStations(startIndex, endIndex, _radioStations);
+            _radioStations = Search.GetPageOfStations(range.Item1, range.Item2, _radioStations);
             
-            if (startIndex >= lastPageItemCount)
+            if (range.Item1 >= lastPageItemCount)
             {
                 _isLastPage = true;
             }
@@ -982,6 +1026,5 @@ namespace Axios
                 }
             }
         }
-
     }
 }

@@ -22,8 +22,6 @@
     <None Remove="Assets\arrowBack.png" />
     <None Remove="Assets\arrowForward.png" />
     <None Remove="Assets\close.png" />
-    <None Remove="Assets\Exit.png" />
-    <None Remove="Assets\Favorite.png" />
     <None Remove="Assets\Fonts\Roboto-Black.ttf" />
     <None Remove="Assets\Fonts\Roboto-BlackItalic.ttf" />
     <None Remove="Assets\Fonts\Roboto-Bold.ttf" />
@@ -71,12 +69,6 @@
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Assets\close.png" />
-    <Resource Include="Assets\exit.png">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Assets\favorite.png">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Resource>
     <Resource Include="Assets\Fonts\Roboto-Black.ttf" />
     <Resource Include="Assets\Fonts\Roboto-BlackItalic.ttf" />
     <Resource Include="Assets\Fonts\Roboto-Bold.ttf" />
