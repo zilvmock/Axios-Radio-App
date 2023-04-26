@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Text;
 using System.IO;
@@ -24,6 +25,7 @@ using Axios.Data;
 using Control = System.Windows.Controls.Control;
 using System.Reflection.Emit;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using Windows.UI.Text.Core;
 using Brushes = System.Windows.Media.Brushes;
 using Color = System.Windows.Media.Color;
@@ -36,7 +38,7 @@ namespace Axios
 {
     public partial class RadioPage
     {
-        public Player? AudioPlayer;
+        public Player? AudioPlayer { get; set; }
         private static Thread? _playerThread;
         public Search Search = new();
         private List<Tuple<string, string, string, string, int, string>> _radioStations;
@@ -170,9 +172,17 @@ namespace Axios
                 }
             }
 
+            // Set previous volume
+            Dispatcher.Invoke(() =>
+            {
+                AudioVolumeLabel.Content = MainWindow.AppSettings.LastVolume;
+                AudioSlider.Value = MainWindow.AppSettings.LastVolume;
+            });
+            AudioPlayer?.SetVolume((float)AudioSlider.Value / 100);
+
             // Grab vote data
             Search.LastVoteTime = MainWindow.AppSettings.LastVoteTime;
-            Search.LastVoteUUID = MainWindow.AppSettings.LastVoteUUID;
+            Search.LastVoteUUIDs = MainWindow.AppSettings.LastVoteUUIDs ?? new StringCollection();
         }
 
         private Task FormatResultsAsync(List<Tuple<string, string, string, string, int, string>> radioStations)
@@ -485,8 +495,9 @@ namespace Axios
             }
         }
 
-        private DataGridRow GetFirstRowOnPage()
+        private DataGridRow? GetFirstRowOnPage()
         {
+            if (StationsDataGrid.Items.Count < 1) { return null; }
             return (DataGridRow)StationsDataGrid.ItemContainerGenerator.ContainerFromItem(StationsDataGrid.Items[0]);
         }
 
@@ -554,6 +565,7 @@ namespace Axios
             StationsDataGrid.ItemsSource = null;
             StationsDataGrid.Items.Clear();
             var range = GetPageRange(_currentPage);
+
             if (_resultsType.Equals("votes"))
             {
                 _radioStations = Search.GetByVotes();
@@ -579,6 +591,7 @@ namespace Axios
             {
                 StationsDataGrid.SelectedIndex = selectedIndex;
             }
+
             StationsDataGrid.IsEnabled = true;
         }
 
@@ -605,17 +618,15 @@ namespace Axios
 
         private void StopPlayerBtn_OnClick(object sender, RoutedEventArgs e)
         {
-            if (AudioPlayer != null) { StopRadio(); }
-            else
+            if (string.IsNullOrEmpty(_currentStationRowUUID))
             {
-                // If no station is selected manually
                 DataGridRow? firstRow = GetFirstRowOnPage();
                 if (firstRow == null) { return; }
                 _ = StartPlayerAsync(firstRow);
             }
-
-            if (!string.IsNullOrEmpty(_currentStationRowUUID))
+            else
             {
+                if (AudioPlayer != null) { StopRadio(); }
                 var currentRow = GetSelectedRowByUUID(_currentStationRowUUID);
                 if (currentRow != null)
                 {
@@ -734,6 +745,7 @@ namespace Axios
                 CurrentDataGridPageLabel.Visibility = Visibility.Visible;
                 NextDataGridPageBtn.Visibility = Visibility.Visible;
             });
+            _resultsType = "search";
             await GatherStationsByNameAsync();
             await UpdateStationBackgroundToCorrect(_currentStationRowUUID);
         }
@@ -759,6 +771,7 @@ namespace Axios
                 CurrentDataGridPageLabel.Visibility = Visibility.Visible;
                 NextDataGridPageBtn.Visibility = Visibility.Visible;
             });
+            _resultsType = "votes";
             await GatherStationsByVotesAsync();
             await UpdateStationBackgroundToCorrect(_currentStationRowUUID);
         }
@@ -775,11 +788,13 @@ namespace Axios
                     {
                         Top100Btn.IsChecked = true;
                         Top100Btn.Content = "• Top 100";
+                        _resultsType = "votes";
                     }
                     else
                     {
                         SearchBtn.IsChecked = true;
                         SearchBtnIcon.Source = SearchBtnWImg;
+                        _resultsType = "search";
                     }
                     FavoriteRemoveBtn.Visibility = Visibility.Collapsed;
                     FavoriteAddBtn.Visibility = Visibility.Visible;
@@ -806,9 +821,11 @@ namespace Axios
                     CurrentDataGridPageLabel.Visibility = Visibility.Hidden;
                     NextDataGridPageBtn.Visibility = Visibility.Hidden;
                 });
+                _resultsType = "favorites";
                 _currentStations = GetCurrentDataGridAsTuple();
-                
+
                 await FormatResultsAsync(_favoriteStations);
+                await UpdateStationBackgroundToCorrect(_currentStationRowUUID);
             }
 
             _favoriteStationsIsShowing = !_favoriteStationsIsShowing;
@@ -903,7 +920,13 @@ namespace Axios
             if (_favoriteStations.Count < 1) { _favoriteStations = new List<Tuple<string, string, string, string, int, string>>(); }
             if (_favoriteStations.Count > StationsPerPage) { return; }
             var row = StationsDataGrid.SelectedItem as Tuple<string, string, string, string, int, string>;
-            if (row != null && !_favoriteStations.Contains(row)) { _favoriteStations.Add(row); }
+            if (row == null)
+            {
+                StationsDataGrid.IsEnabled = true;
+                return;
+            }
+            var uuid = row.Item6;
+            if (_favoriteStations.All(x => x.Item6 != uuid)) { _favoriteStations.Add(row); }
         }
 
         private void MenuItem_Remove_Click(object sender, RoutedEventArgs e)
@@ -911,7 +934,12 @@ namespace Axios
             if (_favoriteStations == null) { return; }
             if (_favoriteStations.Count < 1) { return; }
             var row = StationsDataGrid.SelectedItem as Tuple<string, string, string, string, int, string>;
-            if (row != null && _favoriteStations.Contains(row))
+            if (row == null)
+            {
+                StationsDataGrid.IsEnabled = true;
+                return;
+            }
+            if (_favoriteStations.Contains(row))
             {
                 _favoriteStations.Remove(row);
                 StationsDataGrid.ItemsSource = null;
@@ -922,9 +950,13 @@ namespace Axios
         private async void MenuItem_Vote_Click(object sender, RoutedEventArgs e)
         {
             StationsDataGrid.IsEnabled = false;
-            var selected = StationsDataGrid.SelectedItem as Tuple<string?, string, string, string, int, string>;
-            if (selected == null) { return; }
-            await Search.VoteForStation(selected.Item6);
+            var row = StationsDataGrid.SelectedItem as Tuple<string, string, string, string, int, string>;
+            if (row == null)
+            {
+                StationsDataGrid.IsEnabled = true;
+                return;
+            }
+            await Search.VoteForStation(row.Item6);
             await RefreshPageItems();
         }
 

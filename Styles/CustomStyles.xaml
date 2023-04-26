@@ -263,7 +263,7 @@
                         Background="Transparent"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="5"
+                        CornerRadius="3"
                         Margin="2">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -295,8 +295,8 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsHighlighted" Value="True">
-                            <Setter TargetName="Border" Property="Background" Value="#FD7014" />
-                            <Setter TargetName="Border" Property="BorderBrush" Value="#FD7014" />
+                            <Setter TargetName="Border" Property="Background" Value="#F8A86A" />
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#F8A86A" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

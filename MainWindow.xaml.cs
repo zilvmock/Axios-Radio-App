@@ -1,23 +1,21 @@
 ﻿using System;
+using System.Collections.Specialized;
 using System.Windows;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Drawing;
 using System.ComponentModel;
-using System.IO;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Navigation;
-using Axios.data;
 using Application = System.Windows.Application;
-using Size = System.Drawing.Size;
 using MouseEventArgs = System.Windows.Forms.MouseEventArgs;
 using Axios.Properties;
 using System.Threading;
-using System.Diagnostics.Metrics;
-using System.Xml.Linq;
-using ABI.Windows.Devices.Radios;
+using Axios.data;
 using MessageBox = System.Windows.MessageBox;
+using Window = System.Windows.Window;
+using Brushes = System.Drawing.Brushes;
 
 namespace Axios
 {
@@ -33,6 +31,11 @@ namespace Axios
         public static SettingsPage SettingsPage { get; set; }
         public static SidePanel SidePanel { get; set; }
         public static Settings AppSettings { get; set; }
+
+        //private NotifyIcon NotifyIcon;
+        private ToolStripMenuItem _playPauseMenuItem;
+        private Bitmap _playIcon;
+        private Bitmap _pauseIcon;
 
         public Frame MWContentFrame
         {
@@ -70,6 +73,10 @@ namespace Axios
                 throw new Exception("Failed to load");
             }
 
+            NotifyIcon = new NotifyIcon();
+            _playIcon = GetIconFromUnicode('\uE768');
+            _pauseIcon = GetIconFromUnicode('\uE769');
+
             InitializeSystemTray();
         }
 
@@ -81,7 +88,8 @@ namespace Axios
             Settings.Default.LastStation = RadioPage.GetCurrentStationAsCollection();
             Settings.Default.FirstLaunch = false;
             Settings.Default.LastVoteTime = RadioPage.Search.LastVoteTime;
-            Settings.Default.LastVoteUUID = RadioPage.Search.LastVoteUUID;
+            Settings.Default.LastVoteUUIDs = RadioPage.Search.LastVoteUUIDs;
+            Settings.Default.LastVolume = (int)RadioPage.AudioSlider.Value;
             Settings.Default.Save();
 
             RadioPage.StopRadio();
@@ -115,34 +123,58 @@ namespace Axios
 
         private void InitializeSystemTray()
         {
-            NotifyIcon = new NotifyIcon();
+            //NotifyIcon = new NotifyIcon();
             NotifyIcon.Icon = new Icon("Axios_icon.ico");
             NotifyIcon.Text = "Axios";
             NotifyIcon.MouseClick += NotifyIcon_Click;
             NotifyIcon.ContextMenuStrip = new ContextMenuStrip();
+            var renderer = new CustomToolStripRenderer();
+            NotifyIcon.ContextMenuStrip.Renderer = renderer;
 
-            NotifyIcon.ContextMenuStrip.AutoSize = false;
-            NotifyIcon.ContextMenuStrip.Size = new Size(150, 115);
-            NotifyIcon.ContextMenuStrip.ImageScalingSize = new Size(0, 0);
+            NotifyIcon.ContextMenuStrip.Items.Add(
+                _playPauseMenuItem = new ToolStripMenuItem("Play/Pause", _playIcon, OnPlayPauseClick)
+                {
+                    DisplayStyle = ToolStripItemDisplayStyle.ImageAndText,
+                    ImageScaling = ToolStripItemImageScaling.SizeToFit
+                });
 
-            NotifyIcon.ContextMenuStrip.Items.Add(new ToolStripButton("Play/Pause", null, OnPlayPauseClick) 
-                { AutoSize = false, Dock = DockStyle.Left, Width = 110, TextAlign = ContentAlignment.MiddleLeft });
+            NotifyIcon.ContextMenuStrip.Items.Add(
+                new ToolStripMenuItem("Volume Up (+2)", GetIconFromUnicode('\uE994'), OnVolumeUpClick)
+                {
+                    DisplayStyle = ToolStripItemDisplayStyle.ImageAndText,
+                    ImageScaling = ToolStripItemImageScaling.SizeToFit
+                });
 
-            NotifyIcon.ContextMenuStrip.Items.Add(new ToolStripButton("Volume Up (+2)", null, OnVolumeUpClick)
-                { AutoSize = false, Dock = DockStyle.Left, Width = 110, TextAlign = ContentAlignment.MiddleLeft });
-
-            NotifyIcon.ContextMenuStrip.Items.Add(new ToolStripButton("Volume Down (-2)", null, OnVolumeDownClick)
-                { AutoSize = false, Dock = DockStyle.Left, Width = 110, TextAlign = ContentAlignment.MiddleLeft });
+            NotifyIcon.ContextMenuStrip.Items.Add(
+                new ToolStripMenuItem("Volume Down (-2)", GetIconFromUnicode('\uE993'), OnVolumeDownClick)
+                {
+                    DisplayStyle = ToolStripItemDisplayStyle.ImageAndText,
+                    ImageScaling = ToolStripItemImageScaling.SizeToFit
+                });
 
             NotifyIcon.ContextMenuStrip.Items.Add(new ToolStripSeparator());
 
-            NotifyIcon.ContextMenuStrip.Items.Add(new ToolStripButton("Exit", null, OnExitClick)
-                { AutoSize = false, Dock = DockStyle.Left, Width = 110, TextAlign = ContentAlignment.MiddleLeft });
+            NotifyIcon.ContextMenuStrip.Items.Add(
+                new ToolStripMenuItem("Exit", null, OnExitClick)
+                {
+                    DisplayStyle = ToolStripItemDisplayStyle.ImageAndText,
+                    ImageScaling = ToolStripItemImageScaling.SizeToFit,
+                });
 
             NotifyIcon.Visible = true;
         }
 
-        // EVENTS
+        public Bitmap GetIconFromUnicode(char unicodeChar)
+        {
+            Bitmap icon = new Bitmap(16, 16);
+            using (Graphics g = Graphics.FromImage(icon))
+            {
+                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+                g.DrawString(unicodeChar.ToString(), new Font("Segoe MDL2 Assets", 12), Brushes.Black, new PointF(0, 0));
+            }
+            return icon;
+        }
+
         // -- Tray Icon
         private void NotifyIcon_Click(object? sender, MouseEventArgs e)
         {
@@ -157,6 +189,10 @@ namespace Axios
 
         private void OnPlayPauseClick(object? sender, EventArgs e)
         {
+            if (RadioPage.AudioPlayer != null)
+            {
+                _playPauseMenuItem.Image = RadioPage.AudioPlayer.IsPlaying() ? _playIcon : _pauseIcon;
+            }
             RadioPage.StopRadio();
         }
 
@@ -192,6 +228,22 @@ namespace Axios
         private void CloseButton_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             Window_Closing(sender, new CancelEventArgs());
+        }
+    }
+
+    public class CustomToolStripRenderer : ToolStripProfessionalRenderer
+    {
+        protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e)
+        {
+            var menuItem = e.Item as ToolStripMenuItem;
+            if (menuItem != null && menuItem.Selected)
+            {
+                e.Graphics.FillRectangle(Brushes.LightGray, e.Item.ContentRectangle);
+            }
+            else
+            {
+                base.OnRenderMenuItemBackground(e);
+            }
         }
     }
 }

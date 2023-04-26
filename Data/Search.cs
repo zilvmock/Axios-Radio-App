@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -20,7 +21,7 @@ namespace Axios.data
     {
         private static string API_URL;
         public DateTime LastVoteTime { get; set; }
-        public string LastVoteUUID { get; set; }
+        public StringCollection LastVoteUUIDs { get; set; }
 
         public string SearchPhrase { get; set; }
 
@@ -30,7 +31,7 @@ namespace Axios.data
 
             API_URL = API.GetRadioBrowserApiUrl();
             LastVoteTime = DateTime.MinValue;
-            LastVoteUUID = string.Empty;
+            LastVoteUUIDs = new();
         }
 
         public async Task GetAllStations()
@@ -263,9 +264,9 @@ namespace Axios.data
         public async Task VoteForStation(string uuid)
         {
             if (string.IsNullOrEmpty(uuid)) { return; }
-            if (DateTime.Now - LastVoteTime < TimeSpan.FromMinutes(10) && LastVoteUUID.Equals(uuid)) { return; }
+            if (DateTime.Now - LastVoteTime < TimeSpan.FromMinutes(10) && LastVoteUUIDs.Contains(uuid)) { return; }
             LastVoteTime = DateTime.Now;
-            LastVoteUUID = uuid;
+            LastVoteUUIDs.Add(uuid);
             await new HttpClient().GetAsync($"http://{API_URL}/json/vote/{uuid}");
 
             // Update votes in cache file

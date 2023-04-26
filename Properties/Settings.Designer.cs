@@ -8,6 +8,8 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
+using System.Collections.Generic;
+
 namespace Axios.Properties {
     
     
@@ -71,13 +73,12 @@ namespace Axios.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string LastVoteUUID {
+        public global::System.Collections.Specialized.StringCollection LastVoteUUIDs {
             get {
-                return ((string)(this["LastVoteUUID"]));
+                return ((global::System.Collections.Specialized.StringCollection)(this["LastVoteUUIDs"]));
             }
             set {
-                this["LastVoteUUID"] = value;
+                this["LastVoteUUIDs"] = value;
             }
         }
         
@@ -89,6 +90,18 @@ namespace Axios.Properties {
             }
             set {
                 this["LastVoteTime"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("5")]
+        public int LastVolume {
+            get {
+                return ((int)(this["LastVolume"]));
+            }
+            set {
+                this["LastVolume"] = value;
             }
         }
     }
