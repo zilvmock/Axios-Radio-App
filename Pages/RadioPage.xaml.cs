@@ -239,7 +239,7 @@ namespace Axios
             if (Search.SearchPhrase == SearchTextBox.Text && (_top100StationsIsShowing || _favoriteStationsIsShowing)) { return;}
 
             Search.SearchPhrase = SearchTextBox.Text;
-            _radioStations = Search.GetByName();
+            _radioStations = await Search.GetByName();
             Tuple<int, int> pagesRange = GetPageRange(_currentPage);
             _radioStations = Search.GetPageOfStations(pagesRange.Item1, pagesRange.Item2, _radioStations);
             _resultsType = "search";
@@ -249,7 +249,7 @@ namespace Axios
         private async Task GatherStationsByVotesAsync()
         {
             if (! _top100StationsIsShowing) { return; }
-            _radioStations = Search.GetByVotes();
+            _radioStations = await Search.GetByVotes();
             Tuple<int, int> pagesRange = GetPageRange(_currentPage);
             _radioStations = Search.GetPageOfStations(pagesRange.Item1, pagesRange.Item2, _radioStations);
             _resultsType = "votes";
@@ -568,12 +568,12 @@ namespace Axios
 
             if (_resultsType.Equals("votes"))
             {
-                _radioStations = Search.GetByVotes();
+                _radioStations = await Search.GetByVotes();
                 _radioStations = Search.GetPageOfStations(range.Item1, range.Item2, _radioStations);
             }
             else if (_resultsType.Equals("search"))
             {
-                _radioStations = Search.GetByName();
+                _radioStations = await Search.GetByName();
                 _radioStations = Search.GetPageOfStations(range.Item1, range.Item2, _radioStations);
             }
             else
@@ -985,11 +985,11 @@ namespace Axios
             
             if (_resultsType.Equals("votes"))
             {
-                _radioStations = Search.GetByVotes();
+                _radioStations = await Search.GetByVotes();
             }
             else if (_resultsType.Equals("search"))
             {
-                _radioStations = Search.GetByName();
+                _radioStations = await Search.GetByName();
             }
 
             CurrentDataGridPageLabel.Dispatcher.Invoke(() => { CurrentDataGridPageLabel.Content = _currentPage.ToString(); });
@@ -1007,11 +1007,11 @@ namespace Axios
 
             if (_resultsType.Equals("votes"))
             {
-                _radioStations = Search.GetByVotes();
+                _radioStations = await Search.GetByVotes();
             }
             else if (_resultsType.Equals("search"))
             {
-                _radioStations = Search.GetByName();
+                _radioStations = await Search.GetByName();
             }
 
             int lastPageItemCount = _radioStations.Count - StationsPerPage;

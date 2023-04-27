@@ -94,39 +94,39 @@ namespace Axios.data
 
         private async Task<Tuple<string, string, string, string, int, string>> ParseJsonObjectToTuple(JsonTextReader jsonReader)
         {
-            string url = "";
-            string stationName = "";
-            string icon = "";
-            string country = "";
+            string url = string.Empty;
+            string stationName = string.Empty;
+            string icon = string.Empty;
+            string country = string.Empty;
             int votes = 0;
-            string uuid = "";
+            string uuid = string.Empty;
 
             while (await jsonReader.ReadAsync())
             {
                 if (jsonReader.TokenType == JsonToken.PropertyName)
                 {
-                    string propertyName = jsonReader.Value.ToString();
+                    string propertyName = jsonReader.Value?.ToString() ?? string.Empty;
                     await jsonReader.ReadAsync();
 
                     switch (propertyName)
                     {
                         case "url_resolved":
-                            url = jsonReader.Value.ToString();
+                            url = jsonReader.Value?.ToString() ?? string.Empty;
                             break;
                         case "name":
-                            stationName = jsonReader.Value.ToString();
+                            stationName = jsonReader.Value?.ToString() ?? string.Empty;
                             break;
                         case "favicon":
-                            icon = jsonReader.Value.ToString();
+                            icon = jsonReader.Value?.ToString() ?? string.Empty;
                             break;
                         case "countrycode":
-                            country = jsonReader.Value.ToString();
+                            country = jsonReader.Value?.ToString() ?? string.Empty;
                             break;
                         case "votes":
-                            int.TryParse(jsonReader.Value.ToString(), out votes);
+                            int.TryParse(jsonReader.Value?.ToString(), out votes);
                             break;
                         case "stationuuid":
-                            uuid = jsonReader.Value.ToString();
+                            uuid = jsonReader.Value?.ToString() ?? string.Empty;
                             break;
                         default:
                             break;
@@ -143,10 +143,30 @@ namespace Axios.data
 
         private async Task SaveToJson(List<Tuple<string, string, string, string, int, string>> list)
         {
-            await Task.Run(() =>
+            await Task.Run(async () =>
             {
-                string json = JsonConvert.SerializeObject(list, Formatting.Indented);
-                File.WriteAllText(Resources.CACHE_FILE_PATH, json);
+                bool tryAgain = true;
+                int tries = 0;
+
+                while (tryAgain)
+                {
+                    try
+                    {
+                        string json = JsonConvert.SerializeObject(list, Formatting.Indented);
+                        File.WriteAllText(Resources.CACHE_FILE_PATH, json);
+                        tryAgain = false;
+                    }
+                    catch (System.IO.IOException)
+                    {
+                        if (tries > 3)
+                        {
+                            throw new Exception("Something is wrong with reading the cache file");
+                        }
+
+                        tries++;
+                        await Task.Delay(1000);
+                    }
+                }
             });
         }
 
@@ -200,42 +220,82 @@ namespace Axios.data
             return station;
         }
 
-        public List<Tuple<string, string, string, string, int, string>> GetByName()
+        public async Task<List<Tuple<string, string, string, string, int, string>>> GetByName()
         {
             var stations = new List<Tuple<string, string, string, string, int, string>>();
+            bool tryAgain = true;
+            int tries = 0;
 
-            using (var reader = new JsonTextReader(File.OpenText(Resources.CACHE_FILE_PATH)))
+            while (tryAgain)
             {
-                while (reader.Read())
+                try
                 {
-                    if (reader.TokenType == JsonToken.StartObject)
+                    using (var reader = new JsonTextReader(File.OpenText(Resources.CACHE_FILE_PATH)))
                     {
-                        var station = ReadStation(reader);
-
-                        if (station.Item2.Contains(SearchPhrase))
+                        while (reader.Read())
                         {
-                            stations.Add(station);
+                            if (reader.TokenType == JsonToken.StartObject)
+                            {
+                                var station = ReadStation(reader);
+
+                                if (station.Item2.Contains(SearchPhrase))
+                                {
+                                    stations.Add(station);
+                                }
+                            }
                         }
                     }
+
+                    tryAgain = false;
+                }
+                catch (System.IO.IOException)
+                {
+                    if (tries > 3)
+                    {
+                        throw new Exception("Something is wrong with reading the cache file");
+                    }
+
+                    tries++;
+                    await Task.Delay(1000);
                 }
             }
-
+            
             return stations;
         }
 
-        public List<Tuple<string, string, string, string, int, string>> GetByVotes()
+        public async Task<List<Tuple<string, string, string, string, int, string>>> GetByVotes()
         {
             var stations = new List<Tuple<string, string, string, string, int, string>>();
+            bool tryAgain = true;
+            int tries = 0;
 
-            using (var reader = new JsonTextReader(File.OpenText(Resources.CACHE_FILE_PATH)))
+            while (tryAgain)
             {
-                while (reader.Read())
+                try
                 {
-                    if (reader.TokenType == JsonToken.StartObject)
+                    using (var reader = new JsonTextReader(File.OpenText(Resources.CACHE_FILE_PATH)))
                     {
-                        var station = ReadStation(reader);
-                        stations.Add(station);
+                        while (reader.Read())
+                        {
+                            if (reader.TokenType == JsonToken.StartObject)
+                            {
+                                var station = ReadStation(reader);
+                                stations.Add(station);
+                            }
+                        }
                     }
+
+                    tryAgain = false;
+                }
+                catch (System.IO.IOException)
+                {
+                    if (tries > 3)
+                    {
+                        throw new Exception("Something is wrong with reading the cache file");
+                    }
+
+                    tries++;
+                    await Task.Delay(1000);
                 }
             }
 
