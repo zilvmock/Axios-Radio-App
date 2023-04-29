@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using Axios.Properties;
 using Axios.Windows;
 
 namespace Axios.Pages
@@ -9,13 +10,13 @@ namespace Axios.Pages
         public SettingsPage()
         {
             InitializeComponent();
-            MinimizeOnCloseCheckBox.IsChecked = MainWindow.AppSettings.MinimizeOnExit;
+            MinimizeOnCloseCheckBox.IsChecked = Settings.Default.MinimizeOnExit;
         }
 
         private void SaveSettingsBtn_OnClick(object sender, RoutedEventArgs e)
         {
-            Properties.Settings.Default.MinimizeOnExit = MinimizeOnCloseCheckBox.IsChecked.HasValue ? (bool)MinimizeOnCloseCheckBox.IsChecked : false;
-            Properties.Settings.Default.Save();
+            Settings.Default.MinimizeOnExit = MinimizeOnCloseCheckBox.IsChecked.HasValue ? (bool)MinimizeOnCloseCheckBox.IsChecked : false;
+            Settings.Default.Save();
         }
 
         private async void UpdateStationsCacheBtn_OnClick(object sender, RoutedEventArgs e)

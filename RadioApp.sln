@@ -5,19 +5,28 @@ VisualStudioVersion = 17.5.33424.131
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Axios", "Axios.csproj", "{F175377B-18F7-4E53-AF82-29198579E6A5}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "AxiosSetup", "..\AxiosSetup\AxiosSetup.vdproj", "{9B1D9A51-EB6F-4C75-81B9-26726146B37D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Beta|Any CPU = Beta|Any CPU
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{F175377B-18F7-4E53-AF82-29198579E6A5}.Beta|Any CPU.ActiveCfg = Release|Any CPU
-		{F175377B-18F7-4E53-AF82-29198579E6A5}.Beta|Any CPU.Build.0 = Release|Any CPU
-		{F175377B-18F7-4E53-AF82-29198579E6A5}.Debug|Any CPU.ActiveCfg = Release|Any CPU
-		{F175377B-18F7-4E53-AF82-29198579E6A5}.Debug|Any CPU.Build.0 = Release|Any CPU
+		{F175377B-18F7-4E53-AF82-29198579E6A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F175377B-18F7-4E53-AF82-29198579E6A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F175377B-18F7-4E53-AF82-29198579E6A5}.Debug|x64.ActiveCfg = Debug|x64
+		{F175377B-18F7-4E53-AF82-29198579E6A5}.Debug|x64.Build.0 = Debug|x64
 		{F175377B-18F7-4E53-AF82-29198579E6A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F175377B-18F7-4E53-AF82-29198579E6A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F175377B-18F7-4E53-AF82-29198579E6A5}.Release|x64.ActiveCfg = Release|x64
+		{F175377B-18F7-4E53-AF82-29198579E6A5}.Release|x64.Build.0 = Release|x64
+		{9B1D9A51-EB6F-4C75-81B9-26726146B37D}.Debug|Any CPU.ActiveCfg = Debug
+		{9B1D9A51-EB6F-4C75-81B9-26726146B37D}.Debug|x64.ActiveCfg = Debug
+		{9B1D9A51-EB6F-4C75-81B9-26726146B37D}.Release|Any CPU.ActiveCfg = Release
+		{9B1D9A51-EB6F-4C75-81B9-26726146B37D}.Release|x64.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

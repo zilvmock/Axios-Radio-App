@@ -15,9 +15,11 @@ using Axios.data;
 using Axios.Models;
 using Axios.Services;
 using Axios.Windows;
+using Application = System.Windows.Application;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using Brushes = System.Windows.Media.Brushes;
 using Color = System.Windows.Media.Color;
+using Axios.Properties;
 
 namespace Axios.Pages
 {
@@ -98,11 +100,11 @@ namespace Axios.Pages
             await GatherStationsByVotesAsync();
 
             // Grab last station
-            if (MainWindow.AppSettings.LastStation != null && MainWindow.AppSettings.LastStation.Count > 0)
+            if (Settings.Default.LastStation != null && Settings.Default.LastStation.Count > 0)
             {
                 try
                 {
-                    StringCollection lastStation = MainWindow.AppSettings.LastStation;
+                    StringCollection lastStation = Settings.Default.LastStation;
                     string[]? items = lastStation[0]?.Split(',');
                     if (items != null)
                     {
@@ -124,14 +126,14 @@ namespace Axios.Pages
             }
 
             // Grab favorite stations
-            if (MainWindow.AppSettings.FavoriteStations != null && MainWindow.AppSettings.FavoriteStations.Count > 0)
+            if (Settings.Default.FavoriteStations != null && Settings.Default.FavoriteStations.Count > 0)
             {
                 try
                 {
-                    if (MainWindow.AppSettings.FavoriteStations.Count > 0)
+                    if (Settings.Default.FavoriteStations.Count > 0)
                     {
                         _favoriteStations = new List<Station>();
-                        foreach (var station in MainWindow.AppSettings.FavoriteStations)
+                        foreach (var station in Settings.Default.FavoriteStations)
                         {
                             if (station == null) { continue; }
                             string[] stationData = station.Split(',');
@@ -146,14 +148,14 @@ namespace Axios.Pages
             // Set previous volume
             Dispatcher.Invoke(() =>
             {
-                AudioVolumeLabel.Content = MainWindow.AppSettings.LastVolume;
-                AudioSlider.Value = MainWindow.AppSettings.LastVolume;
+                AudioVolumeLabel.Content = Settings.Default.LastVolume;
+                AudioSlider.Value = Settings.Default.LastVolume;
             });
             AudioPlayer?.SetVolume((float)AudioSlider.Value / 100);
 
             // Set vote data
-            RadioStationManager.LastVoteTime = MainWindow.AppSettings.LastVoteTime;
-            RadioStationManager.LastVoteUUIDs = MainWindow.AppSettings.LastVoteUUIDs ?? new StringCollection();
+            RadioStationManager.LastVoteTime = Settings.Default.LastVoteTime;
+            RadioStationManager.LastVoteUUIDs = Settings.Default.LastVoteUUIDs ?? new StringCollection();
         }
 
         /// <summary>
@@ -308,7 +310,7 @@ namespace Axios.Pages
             if (AudioPlayer.IsPlaying())
             {
                 AudioPlayer.PausePlaying();
-                StopPlayerBtn.Dispatcher.Invoke(() =>
+                Dispatcher.Invoke(() =>
                 {
                     StopPlayerImg.Source = PlayImg;
                     StopPlayerBtn.ToolTip = "Resume";
@@ -317,7 +319,7 @@ namespace Axios.Pages
             else
             {
                 AudioPlayer.ResumePlaying();
-                StopPlayerBtn.Dispatcher.Invoke(() =>
+                Dispatcher.Invoke(() =>
                 {
                     StopPlayerImg.Source = PauseImg;
                     StopPlayerBtn.ToolTip = "Pause";
@@ -735,7 +737,7 @@ namespace Axios.Pages
 
         // -- DATA GRID COMPONENTS EVENTS --
 
-        private void StationsDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private async void StationsDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (_columnHeaderClicked)
             {
@@ -744,7 +746,7 @@ namespace Axios.Pages
             }
             DataGridRow? row = GetSelectedRowFromClick(sender);
             if (row == null) { return; }
-            _ = StartPlayerAsync(row);
+            await StartPlayerAsync(row);
             EnablePlayerButtons();
         }
 
@@ -860,6 +862,7 @@ namespace Axios.Pages
 
         private void MenuItem_Add_Click(object sender, RoutedEventArgs e)
         {
+            if (_favoriteStations == null) { _favoriteStations = new List<Station>(); }
             if (_favoriteStations.Count < 1) { _favoriteStations = new List<Station>(); }
             if (_favoriteStations.Count > StationsPerPage) { return; }
             var row = StationsDataGrid.SelectedItem as Station;

@@ -25,15 +25,12 @@ namespace Axios
         public static RadioPage RadioPage { get; set; }
         public static SettingsPage SettingsPage { get; set; }
         public static SidePanel SidePanel { get; set; }
-        public static Settings AppSettings { get; set; }
         public static NotifyIcon NotifyIcon { get; set; }
         
         private static Mutex _mutex;
+        private ToolStripMenuItem _playPauseMenuItem;
         private bool _runInBackgroundShowed;
         private bool _isExiting;
-        private ToolStripMenuItem _playPauseMenuItem;
-        private Bitmap _playIcon;
-        private Bitmap _pauseIcon;
 
         public Frame MWContentFrame
         {
@@ -55,7 +52,6 @@ namespace Axios
             Data.Resources.InitializeTempDir();
             InitializeComponent();
             MWContentFrame.NavigationUIVisibility = NavigationUIVisibility.Hidden;
-            AppSettings = Settings.Default;
             Application.Current.Exit += OnApplicationExit;
             Closing += Window_Closing;
             RadioPage = new RadioPage();
@@ -70,8 +66,6 @@ namespace Axios
             catch (Exception) { throw new Exception("Failed to load"); }
 
             NotifyIcon = new NotifyIcon();
-            _playIcon = GetIconFromUnicode('\uE768');
-            _pauseIcon = GetIconFromUnicode('\uE769');
 
             InitializeSystemTray();
         }
@@ -94,7 +88,7 @@ namespace Axios
 
         private async void Window_Closing(object? sender, CancelEventArgs e)
         {
-            if (AppSettings.MinimizeOnExit)
+            if (Settings.Default.MinimizeOnExit)
             {
                 e.Cancel = true;
                 Hide();
@@ -120,7 +114,7 @@ namespace Axios
             NotifyIcon.ContextMenuStrip.Renderer = renderer;
 
             NotifyIcon.ContextMenuStrip.Items.Add(
-                _playPauseMenuItem = new ToolStripMenuItem("Play/Pause", _playIcon, OnPlayPauseClick)
+                _playPauseMenuItem = new ToolStripMenuItem("Play/Pause", GetIconFromUnicode('\uE768'), OnPlayPauseClick)
                 {
                     DisplayStyle = ToolStripItemDisplayStyle.ImageAndText,
                     ImageScaling = ToolStripItemImageScaling.SizeToFit
@@ -164,6 +158,7 @@ namespace Axios
         }
 
         // -- TRAY ICON EVENTS --
+
         private void NotifyIcon_Click(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
@@ -177,10 +172,6 @@ namespace Axios
 
         private void OnPlayPauseClick(object? sender, EventArgs e)
         {
-            if (RadioPage.AudioPlayer != null)
-            {
-                _playPauseMenuItem.Image = RadioPage.AudioPlayer.IsPlaying() ? _playIcon : _pauseIcon;
-            }
             RadioPage.StopRadio();
         }
 

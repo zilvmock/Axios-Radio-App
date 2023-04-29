@@ -62,26 +62,7 @@ namespace Axios.data
         /// <summary>
         /// Resumes playing the audio.
         /// </summary>
-        public void ResumePlaying()
-        {
-            if (_waveOut.PlaybackState == PlaybackState.Playing) { return; }
-            if (_isInitializing) { return; }
-
-            _isInitializing = true;
-
-            lock (_initLock)
-            {
-                Task.Run(() =>
-                {
-                    lock (_playLock)
-                    {
-                        _waveOut.Init(_audioReader);
-                        _waveOut.Play();
-                        _isInitializing = false;
-                    }
-                });
-            }
-        }
+        public void ResumePlaying() => _waveOut.Play();
 
         /// <summary>
         /// Ends and disposes the audio player object.
