@@ -1,6 +1,6 @@
 # Axios
 
-Axios is a desktop application developed using .NET 7 and WPF framework. It provides a user-friendly interface for the [Radio Browser API](https://www.radio-browser.info/) to search, browse and listen to radio stations from all around the world.
+**Axios** is a desktop application developed using .NET 7 and WPF framework. It provides a user-friendly interface for the [Radio Browser API](https://www.radio-browser.info/) to search, browse and listen to radio stations from all around the world.
 
 
 ![Axios](https://user-images.githubusercontent.com/36519492/235307116-82b7ab88-fd1e-4984-ab48-749d41db8e2a.PNG)
@@ -17,7 +17,6 @@ Axios is a desktop application developed using .NET 7 and WPF framework. It prov
 - Access quick controls in a tray.
 
 ## User Manual
-### Basic overview of the interface
 #### Navigation
 Currently, there are two main sections in the application: Radio Page and Settings Page. The Radio Page is the default main page when launching the application. You can switch between the pages using the side panel on the right side of the application.
 
