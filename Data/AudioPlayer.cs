@@ -62,7 +62,11 @@ namespace Axios.data
         /// <summary>
         /// Resumes playing the audio.
         /// </summary>
-        public void ResumePlaying() => _waveOut.Play();
+        public void ResumePlaying()
+        {
+            _waveOut.Init(_audioReader);
+            _waveOut.Play();
+        }
 
         /// <summary>
         /// Ends and disposes the audio player object.
