@@ -1,87 +1,67 @@
-﻿using Axios.data;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.ComponentModel;
-using System.Drawing;
-using System.Drawing.Text;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using Axios.Properties;
+using Axios.data;
+using Axios.Models;
+using Axios.Services;
+using Axios.Windows;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
-using Application = System.Windows.Application;
-using Axios.Data;
-using Control = System.Windows.Controls.Control;
-using System.Reflection.Emit;
-using System.Windows.Controls.Primitives;
-using System.Windows.Data;
-using Windows.UI.Text.Core;
 using Brushes = System.Windows.Media.Brushes;
 using Color = System.Windows.Media.Color;
-using FontFamily = System.Windows.Media.FontFamily;
-using FontStyle = System.Windows.FontStyle;
-using MessageBox = System.Windows.MessageBox;
 
-
-namespace Axios
+namespace Axios.Pages
 {
     public partial class RadioPage
     {
-        public Player? AudioPlayer { get; set; }
-        private static Thread? _playerThread;
-        public Search Search = new();
-        private List<Tuple<string, string, string, string, int, string>> _radioStations;
-        private List<Tuple<string, string, string, string, int, string>> _currentStations;
+        public AudioPlayer? AudioPlayer { get; set; }
+        public static RadioStationManager RadioStationManager = new();
+        public static RadioStationService RadioStationService { get; } = new(RadioStationManager);
+        public static RadioStationManagerService RadioStationManagerService { get; } = new(RadioStationManager);
 
+        private List<Station> _radioStations;
+        private List<Station> _currentStations;
+        private static List<Station> _favoriteStations;
+        private static Thread? _playerThread;
+        private string _searchPhrase;
         private string? _prevStationRowUUID;
         private static string _currentStationRowUUID;
-
         private string _prevRowUUID;
         private string _nextRowUUID;
-        private int _failedInRow = 0;
+        private int _failedInRow;
         private bool _nextStationIsPressed;
-        private bool _loading = false;
-        
-        private bool _isPageKeyHeldDown = false;
-        private bool _columnHeaderClicked = false;
-
+        private bool _loading;
+        private bool _isPageKeyHeldDown;
+        private bool _columnHeaderClicked;
         private int _currentPage = 1;
         private bool _isLastPage;
         private bool _isLastItemOnPage;
         private bool _isFirstItemOnPage;
         private string _resultsType;
         private const int StationsPerPage = 18;
-
         private bool _favoriteStationsIsShowing;
         private bool _top100StationsIsShowing;
-
         private bool _dataGridColumnsLoaded;
+        private bool _newPageLoaded;
 
-        private static List<Tuple<string, string, string, string, int, string>> _favoriteStations;
-
-        private static readonly SolidColorBrush DefaultRowColorBrush = new (Color.FromRgb(0xEE, 0xEE, 0xEE));
-        private static readonly SolidColorBrush CorrectRowColorBrush = new (Color.FromRgb(248, 168, 106));
-        //private static readonly SolidColorBrush _failedRowColorBrush = new (Color.FromRgb(254, 244, 219));
-        private static readonly SolidColorBrush FailedRowTextColorBrush = new (Color.FromRgb(0x99, 0x99, 0x99));
-
-        private static readonly BitmapImage PlayImg = new (new Uri("/Assets/play.png", UriKind.Relative));
-        private static readonly BitmapImage PauseImg = new (new Uri("/Assets/pause.png", UriKind.Relative));
-        private static readonly BitmapImage LogoImg = new (new Uri("/Assets/logo.png", UriKind.Relative));
-        private static readonly BitmapImage VolumeImg = new (new Uri("/Assets/volume.png", UriKind.Relative));
-        private static readonly BitmapImage VolumeMuteImg = new (new Uri("/Assets/volumeMute.png", UriKind.Relative));
-        private static readonly BitmapImage SearchBtnBImg = new (new Uri("/Assets/search.png", UriKind.Relative));
-        private static readonly BitmapImage SearchBtnWImg = new (new Uri("/Assets/search_w.png", UriKind.Relative));
+        private static readonly SolidColorBrush DefaultRowColorBrush = new(Color.FromRgb(0xEE, 0xEE, 0xEE));
+        private static readonly SolidColorBrush CorrectRowColorBrush = new(Color.FromRgb(248, 168, 106));
+        private static readonly SolidColorBrush FailedRowTextColorBrush = new(Color.FromRgb(0x99, 0x99, 0x99));
+        private static readonly BitmapImage PlayImg = new(new Uri("/Assets/play.png", UriKind.Relative));
+        private static readonly BitmapImage PauseImg = new(new Uri("/Assets/pause.png", UriKind.Relative));
+        private static readonly BitmapImage VolumeImg = new(new Uri("/Assets/volume.png", UriKind.Relative));
+        private static readonly BitmapImage VolumeMuteImg = new(new Uri("/Assets/volumeMute.png", UriKind.Relative));
+        private static readonly BitmapImage SearchBtnBImg = new(new Uri("/Assets/search.png", UriKind.Relative));
+        private static readonly BitmapImage SearchBtnWImg = new(new Uri("/Assets/search_w.png", UriKind.Relative));
 
         public RadioPage()
         {
@@ -96,12 +76,16 @@ namespace Axios
             InitializeUI();
         }
 
+        /// <summary>
+        /// Initializes the user interface with default values and loads the last played station and favorite stations.
+        /// </summary>
         private async void InitializeUI()
         {
+            // Setup initial UI
             Dispatcher.Invoke(() =>
             {
-                AudioVolumeLabel.Content = Player.DefaultVolume * 100;
-                AudioSlider.Value = Player.DefaultVolume * 100;
+                AudioVolumeLabel.Content = AudioPlayer.DefaultVolume * 100;
+                AudioSlider.Value = AudioPlayer.DefaultVolume * 100;
                 StopPlayerImg.Source = PlayImg;
                 PrevStationBtn.IsEnabled = false;
                 NextStationBtn.IsEnabled = false;
@@ -122,27 +106,20 @@ namespace Axios
                     string[]? items = lastStation[0]?.Split(',');
                     if (items != null)
                     {
-                        var station = new Tuple<string, string, string, string, int, string>(items[0], items[1],
-                            items[2], items[3], int.Parse(items[4]), items[5]);
+                        var station = new Station(items[0], items[1], items[2], items[3], int.Parse(items[4]), items[5]);
 
-                        try
-                        {
-                            Dispatcher.Invoke(() =>
-                            {
-                                GetSelectedRowByUUID(station.Item6).Background = new SolidColorBrush(Color.FromRgb(248, 168, 106));
-                            });
-                        }
-                        catch (Exception) { }
+                        var row = GetSelectedRowByUUID(station.Uuid);
+                        if (row != null) { Dispatcher.Invoke(() => { row.Background = new SolidColorBrush(Color.FromRgb(248, 168, 106)); }); }
 
                         DataGridRow lastStationRow = new DataGridRow { DataContext = station, Item = station };
-                        _currentStationRowUUID = station.Item6;
+                        _currentStationRowUUID = station.Uuid;
                         SetItemPositionValueOnPage(lastStationRow);
                         await StartPlayerAsync(lastStationRow, false);
                     }
                 }
                 catch (Exception)
                 {
-                    MainWindow.NotifyIcon.ShowBalloonTip(500, "Axios", "Failed to load Last Stations! If this happens again please report an issue.", ToolTipIcon.Error);
+                    MainWindow.NotifyIcon.ShowBalloonTip(500, "Axios", "Failed to load Last Station.", ToolTipIcon.Error);
                 }
             }
 
@@ -153,23 +130,17 @@ namespace Axios
                 {
                     if (MainWindow.AppSettings.FavoriteStations.Count > 0)
                     {
-                        _favoriteStations = new List<Tuple<string, string, string, string, int, string>>();
+                        _favoriteStations = new List<Station>();
                         foreach (var station in MainWindow.AppSettings.FavoriteStations)
                         {
                             if (station == null) { continue; }
                             string[] stationData = station.Split(',');
-                            _favoriteStations.Add(new Tuple<string, string, string, string, int, string>(stationData[0], stationData[1], stationData[2], stationData[3], int.Parse(stationData[4]), stationData[5]));
+                            _favoriteStations.Add(new Station(stationData[0], stationData[1], stationData[2], stationData[3], int.Parse(stationData[4]), stationData[5]));
                         }
                     }
-                    else
-                    {
-                        _favoriteStations = new List<Tuple<string, string, string, string, int, string>>();
-                    }
+                    else { _favoriteStations = new List<Station>(); }
                 }
-                catch (Exception)
-                {
-                    MainWindow.NotifyIcon.ShowBalloonTip(500, "Axios", "Failed to load Favorite Stations! If this happens again please report an issue.", ToolTipIcon.Error);
-                }
+                catch (Exception) { MainWindow.NotifyIcon.ShowBalloonTip(500, "Axios", "Failed to load Favorite Stations.", ToolTipIcon.Error); }
             }
 
             // Set previous volume
@@ -180,12 +151,16 @@ namespace Axios
             });
             AudioPlayer?.SetVolume((float)AudioSlider.Value / 100);
 
-            // Grab vote data
-            Search.LastVoteTime = MainWindow.AppSettings.LastVoteTime;
-            Search.LastVoteUUIDs = MainWindow.AppSettings.LastVoteUUIDs ?? new StringCollection();
+            // Set vote data
+            RadioStationManager.LastVoteTime = MainWindow.AppSettings.LastVoteTime;
+            RadioStationManager.LastVoteUUIDs = MainWindow.AppSettings.LastVoteUUIDs ?? new StringCollection();
         }
 
-        private Task FormatResultsAsync(List<Tuple<string, string, string, string, int, string>> radioStations)
+        /// <summary>
+        /// Formats the results of a list of radio stations and displays them in a DataGrid control.
+        /// </summary>
+        /// <param name="radioStations">A list of radio stations to be displayed.</param>
+        private void FormatResults(List<Station> radioStations)
         {
             Dispatcher.Invoke(() =>
             {
@@ -196,19 +171,19 @@ namespace Axios
                     DataGridTextColumn column1 = new DataGridTextColumn
                     {
                         Header = "CC",
-                        Binding = new System.Windows.Data.Binding("Item4")
+                        Binding = new System.Windows.Data.Binding("CountryCode")
                     };
 
                     DataGridTextColumn column2 = new DataGridTextColumn
                     {
                         Header = "Votes",
-                        Binding = new System.Windows.Data.Binding("Item5")
+                        Binding = new System.Windows.Data.Binding("Votes")
                     };
 
                     DataGridTextColumn column3 = new DataGridTextColumn
                     {
                         Header = "Station Name",
-                        Binding = new System.Windows.Data.Binding("Item2"),
+                        Binding = new System.Windows.Data.Binding("Name"),
                         Width = new DataGridLength(1, DataGridLengthUnitType.Star)
                     };
 
@@ -223,39 +198,50 @@ namespace Axios
             });
 
             EventManager.RegisterClassHandler(typeof(DataGridColumnHeader), DataGridColumnHeader.PreviewMouseLeftButtonUpEvent, new MouseButtonEventHandler(DataGridColumnHeader_PreviewMouseLeftButtonUp));
-
-            return Task.CompletedTask;
         }
 
-        private Tuple<int, int> GetPageRange(int currentPage)
+        /// <summary>
+        /// Calculates the starting and ending indices of radio stations to display based on the current page.
+        /// </summary>
+        /// <param name="currentPage">The current page number.</param>
+        /// <returns>A tuple of integers representing the starting and ending indices of the radio stations to display.</returns>
+        private static (int StartIndex, int EndIndex) GetPageRange(int currentPage)
         {
             int startIndex = (StationsPerPage * currentPage) - StationsPerPage;
             int endIndex = StationsPerPage * currentPage;
-            return new Tuple<int, int>(startIndex, endIndex);
+            return (StartIndex: startIndex, EndIndex: endIndex);
         }
 
+        /// <summary>
+        /// Retrieves radio stations containing the search phrase and displays them on the UI.
+        /// </summary>
         private async Task GatherStationsByNameAsync()
         {
-            if (Search.SearchPhrase == SearchTextBox.Text && (_top100StationsIsShowing || _favoriteStationsIsShowing)) { return;}
-
-            Search.SearchPhrase = SearchTextBox.Text;
-            _radioStations = await Search.GetByName();
-            Tuple<int, int> pagesRange = GetPageRange(_currentPage);
-            _radioStations = Search.GetPageOfStations(pagesRange.Item1, pagesRange.Item2, _radioStations);
+            _searchPhrase = SearchTextBox.Text;
+            _radioStations = await RadioStationManagerService.GetStationsByNameAsync(SearchTextBox.Text);
+            var pagesRange = GetPageRange(_currentPage);
+            _radioStations = await RadioStationManagerService.GetPageOfStationsAsync(pagesRange.StartIndex, pagesRange.EndIndex, _radioStations);
             _resultsType = "search";
-            await FormatResultsAsync(_radioStations);
+            FormatResults(_radioStations);
         }
 
+        /// <summary>
+        /// Retrieves radio stations ordered by votes and displays them on the UI.
+        /// </summary>
         private async Task GatherStationsByVotesAsync()
         {
-            if (! _top100StationsIsShowing) { return; }
-            _radioStations = await Search.GetByVotes();
-            Tuple<int, int> pagesRange = GetPageRange(_currentPage);
-            _radioStations = Search.GetPageOfStations(pagesRange.Item1, pagesRange.Item2, _radioStations);
+            _radioStations = await RadioStationManagerService.GetStationsByVotesAsync();
+            var pagesRange = GetPageRange(_currentPage);
+            _radioStations = await RadioStationManagerService.GetPageOfStationsAsync(pagesRange.StartIndex, pagesRange.EndIndex, _radioStations);
             _resultsType = "votes";
-            await FormatResultsAsync(_radioStations);
+            FormatResults(_radioStations);
         }
 
+        /// <summary>
+        /// Starts playing the selected station on a separate thread using AudioPlayer and updates UI components
+        /// </summary>
+        /// <param name="stationRow">The DataGridRow that represents the station to play</param>
+        /// <param name="autoPlay">Whether the station should start playing automatically or not</param>
         private async Task StartPlayerAsync(DataGridRow stationRow, bool autoPlay = true)
         {
             if (stationRow.Item == null) { return; }
@@ -268,50 +254,31 @@ namespace Axios
             });
             DisablePlayerButtons();
 
-            string url;
-            string name;
-            string artUrl;
-            string uuid;
+            var selectedStation = (Station)stationRow.DataContext;
+            string url = selectedStation.Url;
+            string name = selectedStation.Name;
+            string artUrl = selectedStation.IconUrl;
+            string uuid = selectedStation.Uuid;
+
+            if (_playerThread != null && AudioPlayer != null) { AudioPlayer.EndAndDispose(); }
 
             try
             {
-                var selectedStation = (Tuple<string, string, string, string, int, string>)stationRow.DataContext;
-                url = selectedStation.Item1;
-                name = selectedStation.Item2;
-                artUrl = selectedStation.Item3;
-                uuid = selectedStation.Item6;
-            }
-            catch (Exception) { return; }
-
-            if (_playerThread != null && AudioPlayer != null)
-            {
-                AudioPlayer.EndPlaying();
-                //_playerThread.Join();
-            }
-
-            try
-            {
-                await Task.Run(() => { AudioPlayer = new Player(url); });
-                _playerThread = new Thread(AudioPlayer.StartPlaying);
-                if (autoPlay) { _playerThread.Start(); }
-
+                await Task.Run(() => { AudioPlayer = new AudioPlayer(url); });
+                if (AudioPlayer != null) _playerThread = new Thread(AudioPlayer.StartPlaying);
+                if (autoPlay) { _playerThread?.Start(); }
                 UpdatePlayerUiAsync(name, artUrl, autoPlay);
-
-                //_prevStationUrl = url;
                 _prevStationRowUUID = _currentStationRowUUID;
                 _currentStationRowUUID = uuid;
-                
-                await UpdateStationBackgroundToCorrect(uuid);
+                UpdateStationBackgroundToCorrect(uuid);
                 Dispatcher.Invoke(() => { PlayerStatusLabel.Content = ""; });
-                
                 _failedInRow = 0;
             }
             catch (Exception)
             {
                 _failedInRow++;
                 UpdateStationBackgroundToFailed(stationRow);
-                await UpdateStationBackgroundToCorrect(_currentStationRowUUID);
-                
+                UpdateStationBackgroundToCorrect(_currentStationRowUUID);
                 MainWindow.NotifyIcon.ShowBalloonTip(200, "Axios", $"Cannot play {name} right now...", ToolTipIcon.None);
                 Dispatcher.Invoke(() =>
                 {
@@ -323,14 +290,18 @@ namespace Axios
             }
             finally
             {
-                await Search.CountStationClick(_currentStationRowUUID);
+                await RadioStationService.CountStationClickAsync(_currentStationRowUUID);
                 Dispatcher.Invoke(() => { StationsDataGrid.IsEnabled = true; StationsDataGrid.Focus(); });
                 EnablePlayerButtons();
                 SetPrevAndNextRowsFromCurrent();
-                SetItemPositionValueOnPage(GetSelectedRowByUUID(_currentStationRowUUID));
+                var row = GetSelectedRowByUUID(_currentStationRowUUID);
+                if (row != null) { SetItemPositionValueOnPage(row); }
             }
         }
 
+        /// <summary>
+        /// Stops or resumes playing the radio station that is currently being played.
+        /// </summary>
         public void StopRadio()
         {
             if (AudioPlayer == null) { return; }
@@ -354,16 +325,21 @@ namespace Axios
             }
         }
 
+        /// <summary>
+        /// Asynchronously updates the player UI to reflect the currently playing station.
+        /// </summary>
+        /// <param name="name">The name of the currently playing station.</param>
+        /// <param name="artUrl">The URL of the icon for the currently playing station.</param>
+        /// <param name="paused">True if the player is currently paused, false otherwise.</param>
         private async void UpdatePlayerUiAsync(string name, string artUrl, bool paused = false)
         {
             if (AudioPlayer == null) { return; }
-
             Dispatcher.Invoke(() =>
             {
                 AudioPlayer.SetVolume((float)AudioSlider.Value / 100);
                 AudioVolumeLabel.Content = AudioSlider.Value;
                 AudioVolumeLabel.Visibility = Visibility.Visible;
-                double volume = Math.Round((float)AudioPlayer.GetVolume() * 100);
+                double volume = Math.Round(AudioPlayer.GetVolume() * 100);
                 AudioVolumeLabel.Content = volume;
                 AudioSlider.Value = volume;
 
@@ -383,160 +359,172 @@ namespace Axios
                 NowPlayingLabel.Visibility = Visibility.Visible;
             });
 
-            ImageSource? imageSource = await new StationArt(artUrl).GetImageAsync();
-            if (imageSource == null)
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    StationFavIconImg.Source = LogoImg;
-                });
-            }
-            else
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    StationFavIconImg.Source = imageSource;
-                });
-            }
+            await Dispatcher.Invoke(async () => { StationFavIconImg.Source = await RadioStationService.GetStationIconAsync(artUrl); });
         }
 
-        private Task UpdateStationBackgroundToCorrect(string UUID)
+        /// <summary>
+        /// Updates the background color of a given station row to indicate it as correct and changes the previously selected row back to its default color.
+        /// </summary>
+        /// <param name="UUID">The UUID of the station row to update.</param>
+        private void UpdateStationBackgroundToCorrect(string UUID)
         {
-            if (string.IsNullOrEmpty(UUID)) { return Task.CompletedTask; }
+            if (string.IsNullOrEmpty(UUID)) { return; }
             DataGridRow? correctRow = GetSelectedRowByUUID(UUID);
-            if (correctRow == null) { return Task.CompletedTask; }
-
+            if (correctRow == null) { return; }
             Dispatcher.Invoke(() => { correctRow.Background = CorrectRowColorBrush; });
-
-            if (UUID != _prevStationRowUUID && _prevStationRowUUID != null)
-            {
-                DataGridRow? prevRow = GetSelectedRowByUUID(_prevStationRowUUID);
-                if (prevRow != null)
-                {
-                    Dispatcher.Invoke(() =>
-                    {
-                        correctRow.Background = CorrectRowColorBrush;
-                        prevRow.Background = DefaultRowColorBrush;
-                    });
-                }
-            }
-
-            return Task.CompletedTask;
-        }
-
-        private void UpdateStationBackgroundToFailed(DataGridRow stationRow)
-        {
+            if (UUID == _prevStationRowUUID || _prevStationRowUUID == null) { return; }
+            DataGridRow? prevRow = GetSelectedRowByUUID(_prevStationRowUUID);
+            if (prevRow == null) { return; }
             Dispatcher.Invoke(() =>
             {
-                //stationRow.Background = _failedRowColorBrush;
-                stationRow.Foreground = FailedRowTextColorBrush;
+                correctRow.Background = CorrectRowColorBrush;
+                prevRow.Background = DefaultRowColorBrush;
             });
         }
 
+        /// <summary>
+        /// Updates the background color of a specified <see cref="DataGridRow"/> to indicate that the station associated with it failed to play.
+        /// </summary>
+        /// <param name="stationRow">The <see cref="DataGridRow"/> of the station that failed to play.</param>
+        private void UpdateStationBackgroundToFailed(DataGridRow stationRow)
+        {
+            Dispatcher.Invoke(() => { stationRow.Foreground = FailedRowTextColorBrush; });
+        }
+
+        /// <summary>
+        /// Gets the selected row from a DataGrid control based on a mouse click event.
+        /// </summary>
+        /// <param name="sender">The object that raised the event.</param>
+        /// <returns>The selected row in the DataGrid control.</returns>
         private DataGridRow? GetSelectedRowFromClick(object sender)
         {
-            if (!(sender is DataGrid)) { return null; }
+            if (sender is not DataGrid) { return null; }
             if (StationsDataGrid.SelectedItem == null) { return null; }
             object selected = ((DataGrid)sender).SelectedItem;
             return (DataGridRow)((DataGrid)sender).ItemContainerGenerator.ContainerFromItem(selected);
         }
 
+        /// <summary>
+        /// Gets the row in the StationsDataGrid corresponding to the given UUID of a station.
+        /// </summary>
+        /// <param name="UUID">The UUID of the station to search for.</param>
+        /// <returns>The DataGridRow corresponding to the station with the given UUID, or null if no such row exists.</returns>
         private DataGridRow? GetSelectedRowByUUID(string UUID)
         {
             if (string.IsNullOrEmpty(UUID)) { return null; }
-
-            var tuples = StationsDataGrid.ItemsSource as List<Tuple<string, string, string, string, int, string>>;
-
-            if (tuples == null) { return null; }
-
+            var stations = StationsDataGrid.ItemsSource as List<Station>;
+            if (stations == null) { return null; }
             DataGridRow? correctRow = null;
-
-            StationsDataGrid.Dispatcher.Invoke(() =>
+            Dispatcher.Invoke(() =>
             {
-                foreach (var tuple in tuples)
+                foreach (var station in stations)
                 {
-                    if (tuple.Item6.Equals(UUID))
-                    {
-                        correctRow = (DataGridRow)StationsDataGrid.ItemContainerGenerator.ContainerFromItem(tuple);
-                        break;
-                    }
+                    if (!station.Uuid.Equals(UUID)) { continue; }
+                    correctRow = (DataGridRow)StationsDataGrid.ItemContainerGenerator.ContainerFromItem(station);
+                    break;
                 }
             }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
 
             return correctRow;
         }
 
+        /// <summary>
+        /// Sets the previous and next row UUIDs based on the current selected row UUID.
+        /// </summary>
         private void SetPrevAndNextRowsFromCurrent()
         {
             var currentRow = GetSelectedRowByUUID(_currentStationRowUUID);
-
             if (currentRow == null) { return; }
-
+            
             int selectedIndex;
             if (_nextStationIsPressed)
-            {
-                selectedIndex = StationsDataGrid.Items.IndexOf(currentRow.Item) + _failedInRow;
-            }
+            { selectedIndex = StationsDataGrid.Items.IndexOf(currentRow.Item) + _failedInRow; }
             else
-            {
-                selectedIndex = StationsDataGrid.Items.IndexOf(currentRow.Item) - _failedInRow;
-            }
+            { selectedIndex = StationsDataGrid.Items.IndexOf(currentRow.Item) - _failedInRow; }
 
             if (selectedIndex > 0)
             {
                 var row = (DataGridRow)StationsDataGrid.ItemContainerGenerator.ContainerFromItem(StationsDataGrid.Items[selectedIndex - 1]);
-                _prevRowUUID = (row.Item as Tuple<string, string, string, string, int, string>).Item6;
+                _prevRowUUID = (row.Item as Station)?.Uuid ?? string.Empty;
             }
 
             if (selectedIndex < StationsDataGrid.Items.Count - 1)
             {
                 var row = (DataGridRow)StationsDataGrid.ItemContainerGenerator.ContainerFromItem(StationsDataGrid.Items[selectedIndex + 1]);
-                _nextRowUUID = (row.Item as Tuple<string, string, string, string, int, string>).Item6;
+                _nextRowUUID = (row.Item as Station)?.Uuid ?? string.Empty;
             }
         }
 
+        /// <summary>
+        /// Gets the first row displayed on the current page of the data grid.
+        /// </summary>
+        /// <returns>The first row in the grid or null if the grid is empty.</returns>
         private DataGridRow? GetFirstRowOnPage()
         {
             if (StationsDataGrid.Items.Count < 1) { return null; }
             return (DataGridRow)StationsDataGrid.ItemContainerGenerator.ContainerFromItem(StationsDataGrid.Items[0]);
         }
 
-        private DataGridRow GetLastRowOnPage()
+        /// <summary>
+        /// Gets the last row displayed on the current page of the data grid.
+        /// </summary>
+        /// <returns>The last row in the grid or null if the grid is empty.</returns>
+        private DataGridRow? GetLastRowOnPage()
         {
+            if (StationsDataGrid.Items.Count < 1) { return null; }
             return (DataGridRow)StationsDataGrid.ItemContainerGenerator.ContainerFromItem(StationsDataGrid.Items[StationsPerPage - 1]);
         }
 
-        private List<Tuple<string, string, string, string, int, string>> GetCurrentDataGridAsTuple()
+        /// <summary>
+        /// Gets the current data grid as a list of Station objects.
+        /// </summary>
+        /// <returns>List of Station objects.</returns>
+        private List<Station> GetCurrentDataGridAsList()
         {
-            return StationsDataGrid.Items.Cast<Tuple<string, string, string, string, int, string>>().ToList();
+            return StationsDataGrid.Items.Cast<Station>().ToList();
         }
 
+        /// <summary>
+        /// Gets the current selected station as a <see cref="System.Collections.Specialized.StringCollection"/> containing the current selected station data.
+        /// If the current selected station UUID is empty or null, an empty collection will be returned.
+        /// </summary>
+        /// <returns>A <see cref="System.Collections.Specialized.StringCollection"/> containing the current selected station data, or an empty collection if the UUID is empty or null.</returns>
         public static StringCollection GetCurrentStationAsCollection()
         {
             if (string.IsNullOrEmpty(_currentStationRowUUID)) { return new StringCollection(); }
             DataGridRow? selectedRow = MainWindow.RadioPage.GetSelectedRowByUUID(_currentStationRowUUID);
             if (selectedRow == null) { return new StringCollection(); }
-            StringCollection currentStation = new StringCollection();
-            var currentRowTuple = selectedRow.Item as Tuple<string?, string, string, string, int, string>;
-            currentStation.Add($"{currentRowTuple.Item1},{currentRowTuple.Item2},{currentRowTuple.Item3},{currentRowTuple.Item4},{currentRowTuple.Item5},{currentRowTuple.Item6}");
+            StringCollection currentStation = new();
+            var currentRow = selectedRow.Item as Station;
+            currentStation.Add($"{currentRow.Url},{currentRow.Name},{currentRow.IconUrl},{currentRow.CountryCode},{currentRow.Votes},{currentRow.Uuid}");
 
             return currentStation;
         }
 
+        /// <summary>
+        /// Gets the current list of favorite stations as a <see cref="System.Collections.Specialized.StringCollection"/> containing the favorite stations data.
+        /// If there are no favorite stations, an empty string collection is returned.
+        /// </summary>
+        /// <returns>A string collection of favorite stations.</returns>
         public static StringCollection GetFavoriteStationsAsCollection()
         {
-            if (_favoriteStations == null) { return new StringCollection(); }
             if (_favoriteStations.Count < 1) { return new StringCollection(); }
-            StringCollection favoriteStations = new StringCollection();
+            StringCollection favoriteStations = new();
             foreach (var station in _favoriteStations)
             {
-                favoriteStations.Add($"{station.Item1},{station.Item2},{station.Item3},{station.Item4},{station.Item5},{station.Item6}");
+                favoriteStations.Add($"{station.Url},{station.Name},{station.IconUrl},{station.CountryCode},{station.Votes},{station.Uuid}");
             }
 
             return favoriteStations;
         }
 
-        private void SetItemPositionValueOnPage(DataGridRow row)
+
+        /// <summary>
+        /// Sets the values of the _isFirstItemOnPage and _isLastItemOnPage fields depending on the given DataGridRow's position on the page.
+        /// If the DataGrid is empty or null, or the given DataGridRow is null, then the method returns without making any changes.
+        /// </summary>
+        /// <param name="row">The DataGridRow whose position on the page will be used to set the values of the _isFirstItemOnPage and _isLastItemOnPage fields.</param>
+        private void SetItemPositionValueOnPage(DataGridRow? row)
         {
             if (StationsDataGrid.Items.Count < 1 || row == null) { return; }
             
@@ -559,7 +547,11 @@ namespace Axios
             }
         }
 
-        public async Task RefreshPageItems()
+        /// <summary>
+        /// Refreshes the items on the page by retrieving the appropriate stations based on the current page, results type, and search phrase.
+        /// The selected index is maintained across the refresh, and the station background is updated to reflect the currently playing station.
+        /// </summary>
+        public async void RefreshPageItems()
         {
             int selectedIndex = StationsDataGrid.SelectedIndex;
             StationsDataGrid.ItemsSource = null;
@@ -568,34 +560,30 @@ namespace Axios
 
             if (_resultsType.Equals("votes"))
             {
-                _radioStations = await Search.GetByVotes();
-                _radioStations = Search.GetPageOfStations(range.Item1, range.Item2, _radioStations);
+                _radioStations = await RadioStationManagerService.GetStationsByVotesAsync();
+                _radioStations = await RadioStationManagerService.GetPageOfStationsAsync(range.StartIndex, range.EndIndex, _radioStations);
             }
             else if (_resultsType.Equals("search"))
             {
-                _radioStations = await Search.GetByName();
-                _radioStations = Search.GetPageOfStations(range.Item1, range.Item2, _radioStations);
+                _radioStations = await RadioStationManager.GetStationsByNameAsync(_searchPhrase);
+                _radioStations = await RadioStationManagerService.GetPageOfStationsAsync(range.StartIndex, range.EndIndex, _radioStations);
             }
             else
             {
-                await FormatResultsAsync(_favoriteStations);
-                await UpdateStationBackgroundToCorrect(_currentStationRowUUID);
+                FormatResults(_favoriteStations);
+                UpdateStationBackgroundToCorrect(_currentStationRowUUID);
                 StationsDataGrid.IsEnabled = true;
                 return;
             }
 
-            await FormatResultsAsync(_radioStations);
-            await UpdateStationBackgroundToCorrect(_currentStationRowUUID);
+            FormatResults(_radioStations);
+            UpdateStationBackgroundToCorrect(_currentStationRowUUID);
 
-            if (selectedIndex != -1)
-            {
-                StationsDataGrid.SelectedIndex = selectedIndex;
-            }
-
+            if (selectedIndex != -1) { StationsDataGrid.SelectedIndex = selectedIndex; }
             StationsDataGrid.IsEnabled = true;
         }
 
-        // -- Player
+        // -- AUDIO PLAYER COMPONENTS EVENTS --
         private void EnablePlayerButtons()
         {
             Dispatcher.Invoke(() =>
@@ -616,46 +604,45 @@ namespace Axios
             });
         }
 
-        private void StopPlayerBtn_OnClick(object sender, RoutedEventArgs e)
+        private async void StopPlayerBtn_OnClick(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(_currentStationRowUUID))
             {
                 DataGridRow? firstRow = GetFirstRowOnPage();
                 if (firstRow == null) { return; }
-                _ = StartPlayerAsync(firstRow);
+                await StartPlayerAsync(firstRow);
             }
             else
             {
-                if (AudioPlayer != null) { StopRadio(); }
+                StopRadio();
                 var currentRow = GetSelectedRowByUUID(_currentStationRowUUID);
-                if (currentRow != null)
-                {
-                    SetPrevAndNextRowsFromCurrent();
-                    EnablePlayerButtons();
-                }
+                if (currentRow == null) { return; }
+                SetPrevAndNextRowsFromCurrent();
+                EnablePlayerButtons();
             }
         }
 
         private async void PrevStationBtn_OnClick(object sender, RoutedEventArgs e)
         {
             if (_loading) { return; }
-
             _loading = true;
             _nextStationIsPressed = false;
             
             if (_isFirstItemOnPage && ! _favoriteStationsIsShowing)
             {
                 PrevDataGridPageBtn_OnClick(sender, e);
-
-                while (StationsDataGrid.Items.Count == 0)
+                int waited = 0;
+                while (_newPageLoaded == false)
                 {
+                    if (waited > 30) { break; }
                     await Task.Delay(100);
+                    waited++;
                 }
-
-                var row = new DataGridRow();
+                DataGridRow? row = new();
                 await Dispatcher.Invoke(async () =>
                 {
                     row = GetLastRowOnPage();
+                    if (row == null) { _loading = false; return; }
                     await StartPlayerAsync(row);
                 });
                 SetItemPositionValueOnPage(row);
@@ -666,11 +653,9 @@ namespace Axios
             if (!string.IsNullOrEmpty(_prevRowUUID))
             {
                 var row = GetSelectedRowByUUID(_prevRowUUID);
-                if (row != null)
-                {
-                    await StartPlayerAsync(row);
-                    StationsDataGrid.SelectedIndex = row.GetIndex();
-                }
+                if (row == null) { _loading = false; return; }
+                await StartPlayerAsync(row);
+                StationsDataGrid.SelectedIndex = row.GetIndex();
             }
 
             _loading = false;
@@ -679,23 +664,25 @@ namespace Axios
         private async void NextStationBtn_OnClick(object sender, RoutedEventArgs e)
         {
             if (_loading) { return; }
-
             _loading = true;
             _nextStationIsPressed = true;
             
             if (_isLastItemOnPage && ! _favoriteStationsIsShowing)
             {
                 NextDataGridPageBtn_OnClick(sender, e);
-
-                while (StationsDataGrid.Items.Count == 0)
+                int waited = 0;
+                while (_newPageLoaded == false)
                 {
+                    if (waited > 30) { break; }
                     await Task.Delay(100);
+                    waited++;
                 }
 
-                var row = new DataGridRow();
+                DataGridRow? row = new();
                 await Dispatcher.Invoke(async () =>
                 {
                     row = GetFirstRowOnPage();
+                    if (row == null) { _loading = false; return; }
                     await StartPlayerAsync(row);
                 });
                 SetItemPositionValueOnPage(row);
@@ -706,24 +693,217 @@ namespace Axios
             if (!string.IsNullOrEmpty(_nextRowUUID))
             {
                 var row = GetSelectedRowByUUID(_nextRowUUID);
-                if (row != null)
-                {
-                    await StartPlayerAsync(row);
-                    StationsDataGrid.SelectedIndex = row.GetIndex();
-                }
+                if (row == null) { _loading = false; return; }
+                await StartPlayerAsync(row);
+                StationsDataGrid.SelectedIndex = row.GetIndex();
             }
 
             _loading = false;
         }
 
+        private void AudioImg_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (AudioPlayer == null) { return; }
+            if (AudioPlayer.GetVolume().Equals(0))
+            {
+                AudioPlayer.SetVolume(AudioPlayer.LastVolume);
+                AudioSlider.Value = AudioPlayer.LastVolume * 100;
+                Dispatcher.Invoke(() =>
+                {
+                    AudioImg.Source = VolumeImg;
+                    AudioVolumeLabel.Content = (int)Math.Round(AudioSlider.Value);
+                });
+            }
+            else
+            {
+                AudioPlayer.LastVolume = AudioPlayer.GetVolume();
+                AudioSlider.Value = 0;
+                AudioPlayer.SetVolume(0);
+                Dispatcher.Invoke(() =>
+                {
+                    AudioImg.Source = VolumeMuteImg;
+                    AudioVolumeLabel.Content = "0";
+                });
+            }
+        }
+
         private void AudioSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             Dispatcher.Invoke(() => { AudioVolumeLabel.Content = AudioSlider.Value; });
-
             AudioPlayer?.SetVolume((float)AudioSlider.Value / 100);
         }
 
-        // -- Stations and UI
+        // -- DATA GRID COMPONENTS EVENTS --
+
+        private void StationsDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (_columnHeaderClicked)
+            {
+                _columnHeaderClicked = false;
+                return;
+            }
+            DataGridRow? row = GetSelectedRowFromClick(sender);
+            if (row == null) { return; }
+            _ = StartPlayerAsync(row);
+            EnablePlayerButtons();
+        }
+
+        private async void StationsDataGrid_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (_isPageKeyHeldDown) { return; }
+
+            if (e.Key == Key.Enter)
+            {
+                e.Handled = true;
+                DataGridRow? row = GetSelectedRowFromClick(sender);
+
+                if (row != null)
+                {
+                    await StartPlayerAsync(row);
+                }
+            }
+            else if (e.Key == Key.Left && !_favoriteStationsIsShowing)
+            {
+                PrevDataGridPageBtn_OnClick(sender, e);
+                StationsDataGrid.SelectedIndex = 0;
+            }
+            else if (e.Key == Key.Right && !_favoriteStationsIsShowing)
+            {
+                NextDataGridPageBtn_OnClick(sender, e);
+                StationsDataGrid.SelectedIndex = 0;
+            }
+            else if (e.Key == Key.Up)
+            {
+                if (StationsDataGrid.SelectedIndex > 0)
+                { StationsDataGrid.SelectedIndex--; }
+            }
+            else if (e.Key == Key.Down)
+            {
+                if (StationsDataGrid.SelectedIndex < StationsDataGrid.Items.Count - 1)
+                { StationsDataGrid.SelectedIndex++; }
+            }
+
+            _isPageKeyHeldDown = true;
+
+            await Dispatcher.BeginInvoke(() => { StationsDataGrid.Focus(); });
+            Keyboard.Focus(StationsDataGrid);
+        }
+
+        private void StationsDataGrid_OnPreviewKeyUp(object sender, KeyEventArgs e)
+        {
+            _isPageKeyHeldDown = false;
+        }
+
+        private void StationsDataGrid_OnPreviewLostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            if (_isPageKeyHeldDown) { e.Handled = true; }
+        }
+
+        private async void DataGridColumnHeader_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            _columnHeaderClicked = true;
+            StationsDataGrid.IsEnabled = false;
+            await Task.Delay(300);
+            SetPrevAndNextRowsFromCurrent();
+            SetItemPositionValueOnPage(GetSelectedRowByUUID(_currentStationRowUUID));
+            UpdateStationBackgroundToCorrect(_currentStationRowUUID);
+            StationsDataGrid.IsEnabled = true;
+        }
+
+        private void StationsDataGrid_LoadingRow(object sender, DataGridRowEventArgs e)
+        {
+            if (!e.Row.IsSelected) { e.Row.Background = DefaultRowColorBrush; }
+        }
+
+        private async void PrevDataGridPageBtn_OnClick(object sender, RoutedEventArgs e)
+        {
+            _currentPage -= 1;
+            if (_currentPage < 1)
+            {
+                _currentPage = 1;
+                _isLastPage = false;
+                return;
+            }
+            _newPageLoaded = false;
+            _isLastPage = false;
+
+            if (_resultsType.Equals("votes")) { _radioStations = await RadioStationManagerService.GetStationsByVotesAsync(); }
+            else if (_resultsType.Equals("search")) { _radioStations = await RadioStationManagerService.GetStationsByNameAsync(_searchPhrase); }
+            CurrentDataGridPageLabel.Dispatcher.Invoke(() => { CurrentDataGridPageLabel.Content = _currentPage.ToString(); });
+            var range = GetPageRange(_currentPage);
+            _radioStations = await RadioStationManagerService.GetPageOfStationsAsync(range.StartIndex, range.EndIndex, _radioStations);
+            FormatResults(_radioStations);
+            UpdateStationBackgroundToCorrect(_currentStationRowUUID);
+            _newPageLoaded = true;
+        }
+
+        private async void NextDataGridPageBtn_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (_isLastPage) { return; }
+            _newPageLoaded = false;
+            _currentPage += 1;
+            var range = GetPageRange(_currentPage);
+
+            if (_resultsType.Equals("votes")) { _radioStations = await RadioStationManagerService.GetStationsByVotesAsync(); }
+            else if (_resultsType.Equals("search")) { _radioStations = await RadioStationManagerService.GetStationsByNameAsync(_searchPhrase); }
+            int lastPageItemCount = _radioStations.Count - StationsPerPage;
+            _radioStations = await RadioStationManagerService.GetPageOfStationsAsync(range.StartIndex, range.EndIndex, _radioStations);
+
+            if (range.StartIndex >= lastPageItemCount) { _isLastPage = true; }
+            else { _isLastPage = false; }
+
+            CurrentDataGridPageLabel.Dispatcher.Invoke(() => { CurrentDataGridPageLabel.Content = _currentPage.ToString(); });
+            FormatResults(_radioStations);
+            UpdateStationBackgroundToCorrect(_currentStationRowUUID);
+            _newPageLoaded = true;
+        }
+
+        private void MenuItem_Add_Click(object sender, RoutedEventArgs e)
+        {
+            if (_favoriteStations.Count < 1) { _favoriteStations = new List<Station>(); }
+            if (_favoriteStations.Count > StationsPerPage) { return; }
+            var row = StationsDataGrid.SelectedItem as Station;
+            if (row == null)
+            {
+                StationsDataGrid.IsEnabled = true;
+                return;
+            }
+            var uuid = row.Uuid;
+            if (_favoriteStations.All(x => x.Uuid != uuid)) { _favoriteStations.Add(row); }
+        }
+
+        private void MenuItem_Remove_Click(object sender, RoutedEventArgs e)
+        {
+            if (_favoriteStations.Count < 1) { return; }
+            var row = StationsDataGrid.SelectedItem as Station;
+            if (row == null)
+            {
+                StationsDataGrid.IsEnabled = true;
+                return;
+            }
+            if (_favoriteStations.Contains(row))
+            {
+                _favoriteStations.Remove(row);
+                StationsDataGrid.ItemsSource = null;
+                StationsDataGrid.ItemsSource = _favoriteStations;
+            }
+        }
+
+        private async void MenuItem_Vote_Click(object sender, RoutedEventArgs e)
+        {
+            StationsDataGrid.IsEnabled = false;
+            var row = StationsDataGrid.SelectedItem as Station;
+            if (row == null)
+            {
+                StationsDataGrid.IsEnabled = true;
+                return;
+            }
+            await RadioStationService.VoteForStationAsync(row.Uuid);
+            RefreshPageItems();
+        }
+
+        // -- OTHER PAGE COMPONENTS EVENTS --
+
         private async void SearchBtn_OnClick(object sender, RoutedEventArgs e)
         {
             _currentPage = 1;
@@ -747,7 +927,12 @@ namespace Axios
             });
             _resultsType = "search";
             await GatherStationsByNameAsync();
-            await UpdateStationBackgroundToCorrect(_currentStationRowUUID);
+            UpdateStationBackgroundToCorrect(_currentStationRowUUID);
+        }
+
+        private void SearchTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter) { _ = GatherStationsByNameAsync(); }
         }
 
         private async void Top100Btn_OnClick(object sender, RoutedEventArgs e)
@@ -773,10 +958,10 @@ namespace Axios
             });
             _resultsType = "votes";
             await GatherStationsByVotesAsync();
-            await UpdateStationBackgroundToCorrect(_currentStationRowUUID);
+            UpdateStationBackgroundToCorrect(_currentStationRowUUID);
         }
 
-        private async void FavoriteBtn_OnClick(object sender, RoutedEventArgs e)
+        private void FavoriteBtn_OnClick(object sender, RoutedEventArgs e)
         {
             if (_favoriteStationsIsShowing)
             {
@@ -802,8 +987,8 @@ namespace Axios
                     CurrentDataGridPageLabel.Visibility = Visibility.Visible;
                     NextDataGridPageBtn.Visibility = Visibility.Visible;
                 });
-                await FormatResultsAsync(_currentStations);
-                await UpdateStationBackgroundToCorrect(_currentStationRowUUID);
+                FormatResults(_currentStations);
+                UpdateStationBackgroundToCorrect(_currentStationRowUUID);
             }
             else
             {
@@ -822,241 +1007,12 @@ namespace Axios
                     NextDataGridPageBtn.Visibility = Visibility.Hidden;
                 });
                 _resultsType = "favorites";
-                _currentStations = GetCurrentDataGridAsTuple();
+                _currentStations = GetCurrentDataGridAsList();
 
-                await FormatResultsAsync(_favoriteStations);
-                await UpdateStationBackgroundToCorrect(_currentStationRowUUID);
+                FormatResults(_favoriteStations);
+                UpdateStationBackgroundToCorrect(_currentStationRowUUID);
             }
-
             _favoriteStationsIsShowing = !_favoriteStationsIsShowing;
-        }
-
-        private void StationsDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-            if (_columnHeaderClicked)
-            {
-                _columnHeaderClicked = false;
-                return;
-            }
-
-            DataGridRow? row = GetSelectedRowFromClick(sender);
-
-            if (row != null)
-            {
-                _ = StartPlayerAsync(row);
-                EnablePlayerButtons();
-            }
-        }
-
-        private async void StationsDataGrid_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            if (_isPageKeyHeldDown) { return; }
-
-            if (e.Key == Key.Enter)
-            {
-                e.Handled = true;
-                DataGridRow? row = GetSelectedRowFromClick(sender);
-
-                if (row != null)
-                {
-                    await StartPlayerAsync(row);
-                }
-            }
-            else if (e.Key == Key.Left && ! _favoriteStationsIsShowing)
-            {
-                PrevDataGridPageBtn_OnClick(sender, e);
-                StationsDataGrid.SelectedIndex = 0;
-            }
-            else if (e.Key == Key.Right && ! _favoriteStationsIsShowing)
-            {
-                NextDataGridPageBtn_OnClick(sender, e);
-                StationsDataGrid.SelectedIndex = 0;
-            }
-            else if (e.Key == Key.Up)
-            {
-                if (StationsDataGrid.SelectedIndex > 0)
-                {
-                    StationsDataGrid.SelectedIndex--;
-                }
-            }
-            else if (e.Key == Key.Down)
-            {
-                if (StationsDataGrid.SelectedIndex < StationsDataGrid.Items.Count - 1)
-                {
-                    StationsDataGrid.SelectedIndex++;
-                }
-            }
-
-            _isPageKeyHeldDown = true;
-
-            Dispatcher.BeginInvoke(() => { StationsDataGrid.Focus(); });
-            Keyboard.Focus(StationsDataGrid);
-        }
-
-        private void StationsDataGrid_OnPreviewKeyUp(object sender, KeyEventArgs e)
-        {
-            _isPageKeyHeldDown = false;
-        }
-
-        private void StationsDataGrid_OnPreviewLostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
-        {
-            if (_isPageKeyHeldDown) { e.Handled = true; }
-        }
-
-        private async void DataGridColumnHeader_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            _columnHeaderClicked = true;
-            StationsDataGrid.IsEnabled = false;
-            await Task.Delay(500);
-            SetPrevAndNextRowsFromCurrent();
-            SetItemPositionValueOnPage(GetSelectedRowByUUID(_currentStationRowUUID));
-            await UpdateStationBackgroundToCorrect(_currentStationRowUUID);
-            StationsDataGrid.IsEnabled = true;
-        }
-
-        private void MenuItem_Add_Click(object sender, RoutedEventArgs e)
-        {
-            if (_favoriteStations == null) { _favoriteStations = new List<Tuple<string, string, string, string, int, string>>(); }
-            if (_favoriteStations.Count < 1) { _favoriteStations = new List<Tuple<string, string, string, string, int, string>>(); }
-            if (_favoriteStations.Count > StationsPerPage) { return; }
-            var row = StationsDataGrid.SelectedItem as Tuple<string, string, string, string, int, string>;
-            if (row == null)
-            {
-                StationsDataGrid.IsEnabled = true;
-                return;
-            }
-            var uuid = row.Item6;
-            if (_favoriteStations.All(x => x.Item6 != uuid)) { _favoriteStations.Add(row); }
-        }
-
-        private void MenuItem_Remove_Click(object sender, RoutedEventArgs e)
-        {
-            if (_favoriteStations == null) { return; }
-            if (_favoriteStations.Count < 1) { return; }
-            var row = StationsDataGrid.SelectedItem as Tuple<string, string, string, string, int, string>;
-            if (row == null)
-            {
-                StationsDataGrid.IsEnabled = true;
-                return;
-            }
-            if (_favoriteStations.Contains(row))
-            {
-                _favoriteStations.Remove(row);
-                StationsDataGrid.ItemsSource = null;
-                StationsDataGrid.ItemsSource = _favoriteStations;
-            }
-        }
-
-        private async void MenuItem_Vote_Click(object sender, RoutedEventArgs e)
-        {
-            StationsDataGrid.IsEnabled = false;
-            var row = StationsDataGrid.SelectedItem as Tuple<string, string, string, string, int, string>;
-            if (row == null)
-            {
-                StationsDataGrid.IsEnabled = true;
-                return;
-            }
-            await Search.VoteForStation(row.Item6);
-            await RefreshPageItems();
-        }
-
-        private void SearchTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter) { _ = GatherStationsByNameAsync(); }
-        }
-
-        private void StationsDataGrid_LoadingRow(object sender, DataGridRowEventArgs e)
-        {
-            if (!e.Row.IsSelected) { e.Row.Background = new SolidColorBrush(Color.FromRgb(0xEE, 0xEE, 0xEE)); }
-        }
-
-        private async void PrevDataGridPageBtn_OnClick(object sender, RoutedEventArgs e)
-        {
-            _currentPage -= 1;
-            
-            if (_currentPage < 1)
-            {
-                _currentPage = 1;
-                _isLastPage = false;
-                return;
-            }
-
-            _isLastPage = false;
-            
-            if (_resultsType.Equals("votes"))
-            {
-                _radioStations = await Search.GetByVotes();
-            }
-            else if (_resultsType.Equals("search"))
-            {
-                _radioStations = await Search.GetByName();
-            }
-
-            CurrentDataGridPageLabel.Dispatcher.Invoke(() => { CurrentDataGridPageLabel.Content = _currentPage.ToString(); });
-            var range = GetPageRange(_currentPage);
-            _radioStations = Search.GetPageOfStations(range.Item1, range.Item2, _radioStations);
-            await FormatResultsAsync(_radioStations);
-            await UpdateStationBackgroundToCorrect(_currentStationRowUUID);
-        }
-
-        private async void NextDataGridPageBtn_OnClick(object sender, RoutedEventArgs e)
-        {
-            if (_isLastPage) { return; }
-            _currentPage += 1;
-            var range = GetPageRange(_currentPage);
-
-            if (_resultsType.Equals("votes"))
-            {
-                _radioStations = await Search.GetByVotes();
-            }
-            else if (_resultsType.Equals("search"))
-            {
-                _radioStations = await Search.GetByName();
-            }
-
-            int lastPageItemCount = _radioStations.Count - StationsPerPage;
-            _radioStations = Search.GetPageOfStations(range.Item1, range.Item2, _radioStations);
-            
-            if (range.Item1 >= lastPageItemCount)
-            {
-                _isLastPage = true;
-            }
-            else
-            {
-                _isLastPage = false;
-            }
-
-            CurrentDataGridPageLabel.Dispatcher.Invoke(() => { CurrentDataGridPageLabel.Content = _currentPage.ToString(); });
-            await FormatResultsAsync(_radioStations);
-            await UpdateStationBackgroundToCorrect(_currentStationRowUUID);
-        }
-
-        private void AudioImg_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (AudioPlayer != null)
-            {
-                if (AudioPlayer.GetVolume().Equals(0))
-                {
-                    AudioPlayer.SetVolume(AudioPlayer.LastVolume);
-                    AudioSlider.Value = AudioPlayer.LastVolume * 100;
-                    Dispatcher.Invoke(() =>
-                    {
-                        AudioImg.Source = VolumeImg;
-                        AudioVolumeLabel.Content = (int)Math.Round(AudioSlider.Value);
-                    });
-                }
-                else
-                {
-                    AudioPlayer.LastVolume = AudioPlayer.GetVolume();
-                    AudioSlider.Value = 0;
-                    AudioPlayer.SetVolume(0);
-                    Dispatcher.Invoke(() =>
-                    {
-                        AudioImg.Source = VolumeMuteImg;
-                        AudioVolumeLabel.Content = "0";
-                    });
-                }
-            }
         }
     }
 }

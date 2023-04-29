@@ -3,9 +3,27 @@ using System.Net;
 
 namespace Axios.data
 {
+    /// <summary>
+    /// Class for getting the working API URL for radio stations.
+    /// </summary>
     internal class API
     {
-        public static string GetRadioBrowserApiUrl()
+        private static string _apiUrl;
+
+        public static string Url
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_apiUrl)) { _apiUrl = GetWorkingApiUrl(); }
+                return _apiUrl;
+            }
+        }
+
+        /// <summary>
+        /// Gets the working API URL for radio stations by pinging available IPs and returning the IP with the lowest round-trip time.
+        /// </summary>
+        /// <returns>The working API URL for radio stations.</returns>
+        private static string GetWorkingApiUrl()
         {
             string baseUrl = @"all.api.radio-browser.info";
             var ips = Dns.GetHostAddresses(baseUrl);

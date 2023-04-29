@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Specialized;
 using System.Windows;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -12,7 +11,8 @@ using Application = System.Windows.Application;
 using MouseEventArgs = System.Windows.Forms.MouseEventArgs;
 using Axios.Properties;
 using System.Threading;
-using Axios.data;
+using Axios.Controls;
+using Axios.Pages;
 using MessageBox = System.Windows.MessageBox;
 using Window = System.Windows.Window;
 using Brushes = System.Drawing.Brushes;
@@ -21,18 +21,16 @@ namespace Axios
 {
     public partial class MainWindow : Window
     {
-        private static Mutex _mutex = null;
-
         public Window mainWindow => this;
-        public static NotifyIcon NotifyIcon { get; set; }
-        private bool _runInBackgroundShowed;
-        private bool _isExiting;
         public static RadioPage RadioPage { get; set; }
         public static SettingsPage SettingsPage { get; set; }
         public static SidePanel SidePanel { get; set; }
         public static Settings AppSettings { get; set; }
-
-        //private NotifyIcon NotifyIcon;
+        public static NotifyIcon NotifyIcon { get; set; }
+        
+        private static Mutex _mutex;
+        private bool _runInBackgroundShowed;
+        private bool _isExiting;
         private ToolStripMenuItem _playPauseMenuItem;
         private Bitmap _playIcon;
         private Bitmap _pauseIcon;
@@ -63,15 +61,13 @@ namespace Axios
             RadioPage = new RadioPage();
             SettingsPage = new SettingsPage();
             SidePanel = new SidePanel(this);
+            
             try
             {
                 ContentFrame.Content = RadioPage;
                 SidePanelFrame.Content = SidePanel;
             }
-            catch (Exception)
-            {
-                throw new Exception("Failed to load");
-            }
+            catch (Exception) { throw new Exception("Failed to load"); }
 
             NotifyIcon = new NotifyIcon();
             _playIcon = GetIconFromUnicode('\uE768');
@@ -87,8 +83,8 @@ namespace Axios
             Settings.Default.FavoriteStations = RadioPage.GetFavoriteStationsAsCollection();
             Settings.Default.LastStation = RadioPage.GetCurrentStationAsCollection();
             Settings.Default.FirstLaunch = false;
-            Settings.Default.LastVoteTime = RadioPage.Search.LastVoteTime;
-            Settings.Default.LastVoteUUIDs = RadioPage.Search.LastVoteUUIDs;
+            Settings.Default.LastVoteTime = RadioPage.RadioStationManager.LastVoteTime;
+            Settings.Default.LastVoteUUIDs = RadioPage.RadioStationManager.LastVoteUUIDs;
             Settings.Default.LastVolume = (int)RadioPage.AudioSlider.Value;
             Settings.Default.Save();
 
@@ -102,28 +98,20 @@ namespace Axios
             {
                 e.Cancel = true;
                 Hide();
-                if (_runInBackgroundShowed == false)
+                if (_runInBackgroundShowed) { return; }
+                await Task.Delay(1000);
+                await Task.Run(() =>
                 {
-                    await Task.Delay(1000);
-                    await Task.Run(() =>
-                    {
-                        if (_isExiting == false)
-                        {
-                            NotifyIcon.ShowBalloonTip(500, "Axios", "Axios will continue to run in the background.", ToolTipIcon.Info);
-                            _runInBackgroundShowed = true;
-                        }
-                    });
-                }
+                    if (_isExiting) { return; }
+                    NotifyIcon.ShowBalloonTip(500, "Axios", "Axios will continue to run in the background.", ToolTipIcon.Info);
+                    _runInBackgroundShowed = true;
+                });
             }
-            else
-            {
-                Application.Current.Shutdown();
-            }
+            else { Application.Current.Shutdown(); }
         }
 
         private void InitializeSystemTray()
         {
-            //NotifyIcon = new NotifyIcon();
             NotifyIcon.Icon = new Icon("Axios_icon.ico");
             NotifyIcon.Text = "Axios";
             NotifyIcon.MouseClick += NotifyIcon_Click;
@@ -175,7 +163,7 @@ namespace Axios
             return icon;
         }
 
-        // -- Tray Icon
+        // -- TRAY ICON EVENTS --
         private void NotifyIcon_Click(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
@@ -211,13 +199,11 @@ namespace Axios
             Application.Current.Shutdown();
         }
 
-        // -- Custom Title Bar
+        // -- CUSTOM TITLE BAR EVENTS
         private void UIElement_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Left)
-            {
-                if (Application.Current.MainWindow != null) Application.Current.MainWindow.DragMove();
-            }
+            if (e.ChangedButton != MouseButton.Left) { return; }
+            Application.Current.MainWindow?.DragMove();
         }
 
         private void MinimizeButton_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -236,14 +222,8 @@ namespace Axios
         protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e)
         {
             var menuItem = e.Item as ToolStripMenuItem;
-            if (menuItem != null && menuItem.Selected)
-            {
-                e.Graphics.FillRectangle(Brushes.LightGray, e.Item.ContentRectangle);
-            }
-            else
-            {
-                base.OnRenderMenuItemBackground(e);
-            }
+            if (menuItem != null && menuItem.Selected) { e.Graphics.FillRectangle(Brushes.LightGray, e.Item.ContentRectangle); }
+            else { base.OnRenderMenuItemBackground(e); }
         }
     }
 }

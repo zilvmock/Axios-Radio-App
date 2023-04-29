@@ -1,5 +1,5 @@
 ﻿<Page
-    x:Class="Axios.RadioPage"
+    x:Class="Axios.Pages.RadioPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -85,7 +85,7 @@
             VerticalAlignment="Top"
             Click="SearchBtn_OnClick"
             Style="{StaticResource ToggleButtonCustomStyle}"
-            ToolTip="Search">
+            ToolTip="RadioStationManager">
             <Image
                 Name="SearchBtnIcon"
                 Width="16"

@@ -230,18 +230,20 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ContextMenu}">
-                    <Border BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            Background="{TemplateBinding Background}"
-                            CornerRadius="5"
-                            Margin="10"
-                            Padding="4">
+                    <Border
+                        Margin="10"
+                        Padding="4"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="5">
                         <Border.Effect>
-                            <DropShadowEffect BlurRadius="12"
-                                              ShadowDepth="0"
-                                              Direction="0"
-                                              Opacity="0.5"
-                                              Color="Black"/>
+                            <DropShadowEffect
+                                BlurRadius="12"
+                                Direction="0"
+                                Opacity="0.5"
+                                ShadowDepth="0"
+                                Color="Black" />
                         </Border.Effect>
                         <StackPanel IsItemsHost="True" />
                     </Border>
@@ -260,11 +262,11 @@
                 <ControlTemplate TargetType="{x:Type MenuItem}">
                     <Border
                         x:Name="Border"
+                        Margin="2"
                         Background="Transparent"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="3"
-                        Margin="2">
+                        CornerRadius="3">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -274,8 +276,8 @@
                                 x:Name="Icon"
                                 Grid.Column="0"
                                 Margin="6,0,14,0"
-                                VerticalAlignment="Center"
                                 HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
                                 Content="{TemplateBinding Icon}" />
                             <ContentPresenter
                                 x:Name="HeaderHost"
