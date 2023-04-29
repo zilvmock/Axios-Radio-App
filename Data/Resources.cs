@@ -46,7 +46,12 @@ namespace Axios.Data
 
                 foreach (string file in Directory.GetFiles(TempFolderPath))
                 {
-                    if (Path.GetExtension(file) != ".json") { File.Delete(file); }
+                    if (Path.GetExtension(file) != ".json")
+                    {
+                        try { File.Delete(file); }
+                        catch (IOException ex) { continue; }
+                        catch (UnauthorizedAccessException ex) { continue; }
+                    }
                     else { if (deleteJsonCache) { File.Delete(file); } }
                 }
             }

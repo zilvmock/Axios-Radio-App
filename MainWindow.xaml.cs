@@ -28,7 +28,6 @@ namespace Axios
         public static NotifyIcon NotifyIcon { get; set; }
         
         private static Mutex _mutex;
-        private ToolStripMenuItem _playPauseMenuItem;
         private bool _runInBackgroundShowed;
         private bool _isExiting;
 
@@ -114,7 +113,7 @@ namespace Axios
             NotifyIcon.ContextMenuStrip.Renderer = renderer;
 
             NotifyIcon.ContextMenuStrip.Items.Add(
-                _playPauseMenuItem = new ToolStripMenuItem("Play/Pause", GetIconFromUnicode('\uE768'), OnPlayPauseClick)
+                new ToolStripMenuItem("Play/Pause", GetIconFromUnicode('\uE768'), OnPlayPauseClick)
                 {
                     DisplayStyle = ToolStripItemDisplayStyle.ImageAndText,
                     ImageScaling = ToolStripItemImageScaling.SizeToFit
